@@ -976,6 +976,7 @@ button.left-arrow {
 }
 
 .weather > .weather-h1 {
+    white-space: nowrap;
     top: -1.75em;
     right: 50%;
     transform: translateX(50%);
