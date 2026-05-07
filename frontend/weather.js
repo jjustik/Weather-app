@@ -637,18 +637,18 @@ function renderAddButton(data, deleted = false) {
         const weatherContainer = data[i].querySelector(`.weather-container`)
         const dailyWeatherContainer = data[i].querySelector(`.eight-days-weather-container`)
         const weatherContainerAddButton = data[i].querySelector(`.add-city-button-block-1`)
-
+        
         if(deleted) {
             if(!data[i].classList.contains("opacity")) {
-            data[i].classList.add("block-container")
-            weatherContainerH1?.classList.add("hidden");
-            weatherContainerH2?.classList.add("hidden")
-            weatherContainer?.classList.add("hidden");
-            dailyWeatherContainer?.classList.add("hidden")
-            weatherContainerAddButton.classList.add("grid")
-            data[i].classList.remove("hidden")
-            data[i].classList.add("opacity")
-            break;
+                data[i].classList.add("block-container")
+                weatherContainerH1?.classList.add("hidden");
+                weatherContainerH2?.classList.add("hidden")
+                weatherContainer?.classList.add("hidden");
+                dailyWeatherContainer?.classList.add("hidden")
+                weatherContainerAddButton.classList.add("grid")
+                data[i].classList.remove("hidden")
+                data[i].classList.add("opacity")
+                break;
             }
         }
         else {
@@ -681,6 +681,8 @@ function hideAddButton(data) {
             dailyWeatherContainer?.classList.remove("hidden");
             weatherContainerAddButton.classList.remove("grid")
             data[i].classList.remove("opacity")
+            data[i].classList.add("hidden")
+            break;
         }
     }
 }
