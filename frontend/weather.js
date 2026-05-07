@@ -681,7 +681,6 @@ function hideAddButton(data) {
             dailyWeatherContainer?.classList.remove("hidden");
             weatherContainerAddButton.classList.remove("grid")
             data[i].classList.remove("opacity")
-            data[i].classList.add("hidden")
             break;
         }
     }
