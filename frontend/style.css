@@ -3,7 +3,9 @@
 :root {
     --bg-color: rgb(0, 0, 43);
     --primary-color: rgb(0, 121, 182);
+    --primary-color-2: rgb(0, 121, 182);
     --accent-color: rgb(0, 80, 119);
+    --accent-color-2: rgb(0, 80, 119);
     --text-color: rgb(234, 234, 234);
     --basic-font: Poppins, "Segoe Ui", sans-serif;
     --container-color: #fff;
@@ -22,12 +24,18 @@
     --current-time: #fff;
     --scrollbar-color: #fff;
     --scrollbar-color-hover: #aaaaaa;
+    --add-button: #fff;
+    --add-button-2: rgb(222, 222, 222);
+    --add-button-3: #505050;
+    --add-button-4: rgb(194, 194, 194);
 }
 
 .light-theme {
     --bg-color: rgb(0, 0, 43);
     --primary-color: rgb(0, 121, 182);
+    --primary-color-2: rgb(0, 121, 182);
     --accent-color: rgb(0, 80, 119);
+    --accent-color-2: rgb(0, 80, 119);
     --text-color: rgb(234, 234, 234);
     --basic-font: Poppins, "Segoe Ui", sans-serif;
     --container-color: #fff;
@@ -46,12 +54,18 @@
     --current-time: #fff;
     --scrollbar-color: #fff;
     --scrollbar-color-hover: #aaaaaa;
+    --add-button: #fff;
+    --add-button-2: rgb(222, 222, 222);
+    --add-button-3: #505050;
+    --add-button-4: rgb(194, 194, 194);
 }
 
 .dark-theme {
     --bg-color: rgb(0, 0, 0);
     --primary-color: rgb(59, 61, 62);
+    --primary-color-2: rgb(49, 49, 49);
     --accent-color: rgb(44, 44, 44);
+    --accent-color-2: rgb(27, 27, 27);
     --text-color: rgb(27, 27, 27);
     --basic-font: Poppins, "Segoe Ui", sans-serif;
     --container-color: #2c2c2c;
@@ -70,12 +84,18 @@
     --current-time: rgb(71, 71, 71);
     --scrollbar-color: rgb(75, 75, 75);
     --scrollbar-color-hover: #292929;
+    --add-button: #2c2c2c;
+    --add-button-2: #1c1c1c;
+    --add-button-3: #505050;
+    --add-button-4: #0f0f0f;
 }
 
 .black-orange-theme {
     --bg-color: rgb(0, 0, 0);
     --primary-color: rgb(153, 69, 0);
+    --primary-color-2: rgb(106, 48, 0);
     --accent-color: rgb(111, 50, 0);
+    --accent-color-2: rgb(111, 50, 0);
     --text-color: rgb(27, 27, 27);
     --basic-font: Poppins, "Segoe Ui", sans-serif;
     --container-color: #2c2c2c;
@@ -94,6 +114,10 @@
     --current-time: rgb(71, 71, 71);
     --scrollbar-color: rgb(75, 75, 75);
     --scrollbar-color-hover: #292929;
+    --add-button: #2c2c2c;
+    --add-button-2: #1c1c1c;
+    --add-button-3: #505050;
+    --add-button-4: #0f0f0f;
 }
 
 @keyframes slideIn {
@@ -128,6 +152,29 @@
         opacity: 1;
     }
 }
+
+@keyframes slideInNoOpacity {
+    0% {
+        transform: translateX(-10%);
+        opacity: 0.5;
+    }
+    100% {
+        transform: translateX(0);
+        opacity: 0.8;
+    }
+}
+
+@keyframes reverseSlideInNoOpacity {
+    0% {
+        transform: translateX(10%);
+        opacity: 0.5;
+    }
+    100% {
+        transform: translateX(0);
+        opacity: 0.8;
+    }
+}
+
 
 * {
     margin: 0;
@@ -368,7 +415,10 @@ nav a {
 }
 
 .weather-project-2 {
+    width: 95%;
     display: none;
+    justify-content: center;
+    height: 27.5em;
     position: relative;
 }
 
@@ -384,23 +434,35 @@ nav a {
     text-align: center;
 }
 
-.kharkiv-8days-weather-container, .zabrze-8days-weather-container, .gottmadingen-8days-weather-container, .sandanski-8days-weather-container, .daily-weather {
+.eight-days-weather-container, .daily-weather {
+    position: relative;
     display: flex;
     flex-direction: row;
 }
 
-.kharkiv-8days-weather, .zabrze-8days-weather, .gottmadingen-8days-weather, .sandanski-8days-weather {
+.eight-days-weather {
+    position: relative;
+    display: none;
+    opacity: 0.8;
     width: 60vw;
     margin: 0 auto;
+    z-index: 1;
 }
 
-.kharkiv-8days-weather-container , .zabrze-8days-weather-container , .gottmadingen-8days-weather-container ,.sandanski-8days-weather-container{
+.weather-h2 {
+    position: relative;
+    font-size: 1.8em;
+    top: -0.1em;
+    visibility: hidden;
+}
+
+.eight-days-weather-container {
     border: 2px solid var(--border-color-2);
     padding: 0.1em 1em 0.1em 1em;
     border-radius: 10px;
 }
 
-[class*="-8days-weather-container-inner"] {
+.eight-days-weather-container-inner {
     width: 100%;
     display: flex;
     gap: 2em;
@@ -410,23 +472,23 @@ nav a {
     overflow-x: auto;
 }
 
-[class*="-8days-weather-container-inner"]::-webkit-scrollbar {
+.eight-days-weather-container-inner::-webkit-scrollbar {
     width: 90px;
     height: 7px;
 }
 
-[class*="-8days-weather-container-inner"]::-webkit-scrollbar-track {
+.eight-days-weather-container-inner::-webkit-scrollbar-track {
     background: transparent;
     border-radius: 10px;
     margin: 0 1px;
 }
 
-[class*="-8days-weather-container-inner"]::-webkit-scrollbar-thumb {
+.eight-days-weather-container-inner::-webkit-scrollbar-thumb {
     border-radius: 10px;
     background: var(--scrollbar-color);
 }
 
-[class*="-8days-weather-container-inner"]::-webkit-scrollbar-thumb:hover {
+.eight-days-weather-container-inner::-webkit-scrollbar-thumb:hover {
     background: var(--scrollbar-color-hover);
 }
 
@@ -457,6 +519,11 @@ nav a {
 
 .full-weather-container {
     display: none;
+    position: relative;
+    width: fit-content;
+    opacity: 0.8;
+    /* padding: 0 10%; */
+    z-index: 1;
 }
 
 .full-weather-container:last-child {
@@ -464,28 +531,160 @@ nav a {
 }
 
 .weather-container {
+    position: relative;
+    top: 1.5em;
     display: grid;
-    grid-template-columns: 300px 39em;
+    /* grid-template-columns: 300px 39em; */
+    grid-template-columns: 300px minmax(0, 37em);
     grid-template-rows: auto 1fr;
-    gap: 1.5em 0.8em;
+    gap: 0 0.8em;
 }
 
 .weather-h1 {
+    position: relative;
+    top: 0.4em;
     text-align: center;
     color: var(--text-color);
 }
 
-.weather {
+[id*="weather-container-"] > .weather-h1 {
+    visibility: hidden;
+}
+
+[id*="weather-container-"] > .weather-h1.visible {
+    visibility: visible;
+}
+
+.weather, .weather-1 {
     position: relative;
     grid-row: 2;
     height: 22.3em;
     padding: 0.8em;
-    display: grid;
+    outline: 4px solid var(--accent-color-2);
     gap: 0.2em;
     grid-template-rows: 63% 37%;
     background: var(--container-color);
     border-radius: 1em;
     align-items: center;
+}
+
+.weather {
+    display: none;
+    opacity: 0.8;
+}
+
+.weather-1 {
+    display: grid;
+    opacity: 1;
+}
+
+.add-city-button-block, .add-city-button-block-1 {
+    position: relative;
+    justify-items: center;
+    grid-row: 2;
+    top: -1em;
+}
+
+.add-city-button-block {
+    display: grid;
+}
+
+.add-city-button-block-1 {
+    display: none;
+}
+
+.weather-project-2 > .full-weather-container > .add-city-button-block-1 {
+    top: 8em;
+}
+
+.add-city-button-h1 {
+    position: relative;
+    top: -0.3em;
+    display: grid;
+    align-self: end;
+    color: var(--text-color);
+}
+
+.add-city-button {
+    width: 8em;
+    height: 8em;
+    border-radius: 50%;
+    border: 0;
+    outline: 0;
+    align-self: start;
+    background-color: #000;
+    display: grid;
+    position: relative;
+    cursor: pointer;
+}
+
+.self-center {
+    align-self: center;
+}
+
+.first-cyrcle {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background-color: var(--add-button);
+    display: grid;
+    place-items: center;
+}
+
+.second-cyrcle {
+    width: 90%;
+    height: 90%;
+    border-radius: 50%;
+    background-color: var(--add-button-2);
+    display: grid;
+    place-items: center;
+}
+
+.second-cyrcle > svg {
+    fill: var(--add-button-3);
+    height: 5em;
+    width: 5em;
+    justify-self: center;
+    align-self: center;
+    transition: transform 0.4s ease;
+}
+
+.add-city-button:hover .second-cyrcle > svg {
+    transform: rotate(90deg);
+}
+
+.add-city-button:hover .second-cyrcle {
+    background-color: var(--add-button-4);
+}
+
+.btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    border-radius: 50%;
+    padding: 0.1em;
+    outline: 0;
+    top: -0.9em;
+    right: -0.9em;
+    z-index: 1;
+    cursor: pointer;
+}
+
+.btn:hover {
+    opacity: 0.85;
+}
+
+.btn svg {
+    width: 2em;
+    height: 2em;
+    background-color: white;
+    border-radius: 50%;
+    z-index: 2;
+}
+
+.remove-svg {
+    fill: red;
 }
 
 @property --angle {
@@ -494,20 +693,44 @@ nav a {
     inherits: false;
 }
 
-.weather::after, .weather::before {
+.opacity::after, .opacity::before, .btn::after, .btn::before, .add-city-button::after, .add-city-button::before {
     --angle: 0deg;
     content: "";
     position: absolute;
     height: 100%;
     width: 100%;
-    background: conic-gradient(from var(--angle), black, var(--primary-color), black, var(--primary-color), black);
     top: 50%;
     left: 50%;
     translate: -50% -50%;
-    z-index: -1;
+    z-index: -2;
     border-radius: 1em;
-    padding: 4px;
     animation: 3s spin linear infinite;
+}
+
+.opacity::after, .opacity::before, .btn::after, .btn::before {
+    border-radius: 1em;
+}
+
+.add-city-button::after, .add-city-button::before {
+    background: conic-gradient(from var(--angle), black, var(--primary-color-2), black, var(--primary-color-2), black);
+    border-radius: 50%;
+    padding: 4px;
+    z-index: -1;
+}
+
+.weather::after, .weather::before {
+    background: conic-gradient(from var(--angle), black, var(--primary-color), black, var(--primary-color), black);
+    padding: 4px;
+    z-index: -1;
+}
+
+.btn::after, .btn::before {
+    background: conic-gradient(from var(--angle), rgb(14, 0, 76), var(--primary-color), rgb(14, 0, 76), var(--primary-color), rgb(14, 0, 76));
+}
+
+.btn::after, .btn::before {
+    padding: 1px;
+    z-index: 1;
 }
 
 @keyframes spin {
@@ -734,12 +957,13 @@ nav a {
     font-weight: 500;
 }
 
-button.right-arrow, button.left-arrow {
+/* -------------BUTTONS---------------- */
+.right-arrow, .left-arrow {
     position: absolute;
     cursor: pointer;
 }
 
-button.right-arrow, button.left-arrow {
+.right-arrow, .left-arrow {
     border: 0;
     outline: 0;
     width: 50px;
@@ -747,19 +971,19 @@ button.right-arrow, button.left-arrow {
     border-radius: 0.5em;
 }
 
-button.right-arrow, button.left-arrow {
+.right-arrow, .left-arrow {
     display: flex;
     justify-content: center;
     align-items: center;
     background-color: var(--button-bg-color);
 }
 
-button.right-arrow:hover, button.left-arrow:hover {
+.right-arrow:hover, .left-arrow:hover {
     transition: 0.4s;
     background-color: var(--button-bg-color-hover);
 }
 
-button.right-arrow::after, button.left-arrow::after, button.right-arrow::before, button.left-arrow::before {
+.right-arrow::after, .left-arrow::after, .right-arrow::before, .left-arrow::before {
     --angle: 0deg;
     content: "";
     position: absolute;
@@ -775,24 +999,26 @@ button.right-arrow::after, button.left-arrow::after, button.right-arrow::before,
     animation: 6s spin linear infinite;
 }
 
-button.right-arrow svg, button.left-arrow svg {
+.right-arrow svg, .left-arrow svg {
     fill: rgb(0, 0, 43);
     width: 25px;
     height: 25px;
 }
 
-button.right-arrow {
-    top: 52%;
-    right: -7.5%;
+.right-arrow {
+    top: 51%;
+    right: 7.6%;
 }
 
-button.left-arrow {
-    top: 52%;
-    left: -7.5%;
+.left-arrow {
+    top: 51%;
+    left: 7.6%;
 }
 
 .weather-project {
     display: grid;
+    position: relative;
+    top: 1.5em;
     gap: 0 2em;
 }
 
@@ -812,9 +1038,12 @@ button.left-arrow {
     width: 16em;
 }
 
-.weather-project > .weather-h1 {
-    top: -0.3em;
-    position: relative;
+.weather > .weather-h1 {
+    white-space: nowrap;
+    top: -1.75em;
+    right: 50%;
+    transform: translateX(50%);
+    position: absolute;
 }
 
 .change-mode-button {
@@ -887,6 +1116,15 @@ button.left-arrow {
     color: var(--profile-username-color);
 }
 
+.block-container {
+    width: 70%;
+}
+
+.opacity {
+    opacity: 1;
+    outline: 0;
+}
+
 .hidden {
     display: none;
 }
@@ -897,6 +1135,10 @@ button.left-arrow {
 
 .grid {
     display: grid;
+}
+
+.visible {
+    visibility: visible;
 }
 
 .flex {
@@ -913,6 +1155,14 @@ button.left-arrow {
 
 .reverseSlideIn {
     animation: ReverseslideIn 0.8s ease-out;
+}
+
+.slideInNoOpacity {
+    animation: slideInNoOpacity 0.8s ease-out;
+}
+
+.reverseSlideInNoOpacity {
+    animation: reverseSlideInNoOpacity 0.8s ease-out;
 }
 
 .displaySlide {
@@ -942,25 +1192,25 @@ button.left-arrow {
     .weather-project > .weather {
         height: 15em;
     }
-    #weather-1, #h1-1 {
+    .weather:nth-child(1), .weather > .weather-h1:nth-child(1) {
         grid-column-start: 1;
         grid-row-start: 1;
     }
-    #weather-2, #h1-2 {
+    .weather:nth-child(2), .weather > .weather-h1:nth-child(2) {
         grid-column-start: 1;
         grid-row-start: 2;
     }
-    #weather-3, #h1-3 {
+    .weather:nth-child(3), .weather > .weather-h1:nth-child(3) {
         grid-column-start: 2;
         grid-row-start: 1;
     }
-    #weather-4, #h1-4 {
+    .weather:nth-child(4), .weather > .weather-h1:nth-child(4) {
         grid-column-start: 2;
         grid-row-start: 2;
     }
-    .weather-h1 {
+    .weather > .weather-h1 {
         font-size: 1.5em;
-        margin-top: -1.3em;
+        margin-top: -0.4em;
     }
     .weather-project > .weather > .weather-details-2 > .details-2-more {
         height: 2.4em;
@@ -972,19 +1222,19 @@ button.left-arrow {
         font-size: 9px;
         margin-top: -1.8em;
     }
-    .weather-project-2 > .full-weather-container {
-        padding: 0 10%;
-    }
-    .weather-project-2 > .full-weather-container > .weather-container {
+    /* .weather-project-2 > .full-weather-container > .weather-container {
         grid-template-columns: 300px 1fr;
-    }
-    button.right-arrow {
+    } */
+    .right-arrow {
         top: 48%;
         right: 2.5%;
     }
-    button.left-arrow {
+    .left-arrow {
         top: 48%;
         left: 2.5%;
+    }
+    .add-city-button-block {
+        grid-row: unset;
     }
 }
 
@@ -1013,10 +1263,10 @@ button.left-arrow {
     .weather-project {
         width: 100%;
     }
-    button.right-arrow {
+    .right-arrow {
         right: 1.5%;
     }
-    button.left-arrow {
+    .left-arrow {
         left: 1.5%;
     }
 }
@@ -1042,19 +1292,19 @@ button.left-arrow {
     .weather-project > .weather {
         height: 22.3em;
     }
-    #weather-1, #h1-1 {
+    .weather:nth-child(1), .weather > .weather-h1:nth-child(1) {
         grid-column-start: 1;
         grid-row-start: 1;
     }
-    #weather-2, #h1-2 {
+    .weather:nth-child(2), .weather > .weather-h1:nth-child(2) {
         grid-column-start: 1;
         grid-row-start: 2;
     }
-    #weather-3, #h1-3 {
+    .weather:nth-child(3), .weather > .weather-h1:nth-child(3) {
         grid-column-start: 1;
         grid-row-start: 3;
     }
-    #weather-4, #h1-4 {
+    .weather:nth-child(4), .weather > .weather-h1:nth-child(4) {
         grid-column-start: 1;
         grid-row-start: 4;
     }
@@ -1081,11 +1331,11 @@ button.left-arrow {
     .weather-project-2 > .full-weather-container > .weather-container > .weather {
         grid-row: 1;
     }
-    button.right-arrow {
+    .right-arrow {
         top: 87%;
         right: 40.5%;
     }
-    button.left-arrow {
+    .left-arrow {
         top: 87%;
         left: 40.5%;
     }
@@ -1098,11 +1348,11 @@ button.left-arrow {
 }
 
 @media (max-width: 690px) {
-    button.right-arrow {
+    .right-arrow {
         top: 87%;
         right: 35.5%;
     }
-    button.left-arrow {
+    .left-arrow {
         top: 87%;
         left: 35.5%;
     }
@@ -1137,15 +1387,15 @@ button.left-arrow {
     .weather-project-2 > .full-weather-container {
         padding: 0;
     }
-    button.right-arrow, button.left-arrow {
+    .right-arrow, .left-arrow {
         width: 40px;
         height: 40px;
     }
-    button.right-arrow {
+    .right-arrow {
         top: 7%;
         right: 61%;
     }
-    button.left-arrow {
+    .left-arrow {
         top: 7%;
         left: 15%;
     }
@@ -1169,19 +1419,19 @@ button.left-arrow {
 }
 
 @media (max-width: 440px) {
-    button.right-arrow {
+    .right-arrow {
         right: 59.5%;
     }
-    button.left-arrow {
+    .left-arrow {
         left: 15%;
     }
 }
 
 @media (max-width: 405px) {
-    button.right-arrow {
+    .right-arrow {
         right: 57%;
     }
-    button.left-arrow {
+    .left-arrow {
         left: 15%;
     }
 }
@@ -1211,19 +1461,19 @@ button.left-arrow {
 }
 
 @media (max-width: 380px) {
-    button.right-arrow {
+    .right-arrow {
         right: 55.5%;
     }
-    button.left-arrow {
+    .left-arrow {
         left: 15.5%;
     }
 }
 
 @media (max-width: 355px) {
-    button.right-arrow {
+    .right-arrow {
         right: 53.1%;
     }
-    button.left-arrow {
+    .left-arrow {
         left: 15.1%;
     }
 }
