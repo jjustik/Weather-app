@@ -1328,7 +1328,7 @@ async function fetchDailyWatherKharkiv() {
     }
 }
 
-// ----------- SLIDER FOR ADVANCED MODE -------------
+// ----------- SLIDER -------------
 function getCurrentIndex(collection) {
     return collection.findIndex(slide => slide.classList.contains("displaySlide")) || 0;
 }
@@ -1349,21 +1349,13 @@ function weatherScroll(collection, state, i, dir) {
 
     const curr = collection[state[i]];
 
-    curr.classList.remove("slideIn", "slideInB", "reverseSlideIn");
+    curr.classList.remove("slideIn", "slideInB", "reverseSlideIn", "slideInNoOpacity", "reverseSlideInNoOpacity");
     void curr.offsetWidth;
 
     if (dir === "right") {
         curr.classList.contains("opacity") ? curr.classList.add("slideInB") : curr.classList.add("slideInNoOpacity");
-        setTimeout(() => {
-            curr.classList.remove("slideInB")
-            curr.classList.remove("slideInNoOpacity")
-        }, 800);
     } else {
         curr.classList.contains("opacity") ? curr.classList.add("reverseSlideIn") : curr.classList.add("reverseSlideInNoOpacity");
-        setTimeout(() => {
-            curr.classList.remove("reverseSlideIn")
-            curr.classList.remove("reverseSlideInNoOpacity")
-        }, 800);
     }
 
     curr.classList.add("displaySlide");
