@@ -6,66 +6,9 @@ let username;
 let usernameInput;
 const form = document.getElementById("profileForm");
 
-function getCurrentIndex(collection) {
-    return collection.findIndex(slide => slide.classList.contains("displaySlide")) || 0;
-}
-    // MAIN SLIDER BUTTON 
-    const slides = Array.from(document.querySelectorAll(".full-weather-container"));
-
-    const r_buttons1 = document.getElementById("w-arrow1");
-    const l_buttons1 = document.getElementById("w-arrow2");
-    const collections1 = [slides];
-    const indices1 = collections1.map(() => 0);
-
-    collections1.forEach((col) => {
-        if (col.length > 0) col[0].classList.add("displaySlide");
-    });
-
-function weatherScroll(collection, i, dir) {
-    if (collection.length === 0) return;
-
-    indices1[i] = getCurrentIndex(collection);
-
-    collection[indices1[i]].classList.remove("displaySlide");
-
-    indices1[i] =
-        dir === "right"
-            ? (indices1[i] + 1) % collection.length
-            : (indices1[i] - 1 + collection.length) % collection.length;
-
-    const curr = collection[indices1[i]];
-
-    curr.classList.remove("slideIn", "slideInB", "reverseSlideIn");
-    void curr.offsetWidth;
-
-    if (collection === slides) {
-        if (dir === "right") {
-            curr.classList.add("slideInB");
-            setTimeout(() => {
-                curr.classList.remove("slideInB")
-            }, 800);
-        } else {
-            curr.classList.add("reverseSlideIn");
-            setTimeout(() => {
-                curr.classList.remove("reverseSlideIn")
-            }, 800);
-        }
-    }
-
-    curr.classList.add("displaySlide");
-}
-
-r_buttons1?.addEventListener("click", () => {
-    collections1.forEach((col, i) => weatherScroll(col, i, "right"));
-});
-
-l_buttons1?.addEventListener("click", () => {
-    collections1.forEach((col, i) => weatherScroll(col, i, "left"));
-});
-
 function changeModeToDays() {
     if(weatherProject && weatherProject2) {
-        weatherProject2.classList.remove("block")
+        weatherProject2.classList.remove("flex")
         weatherProject.classList.remove("grid")
         weatherProject.classList.add("hidden")
         weatherProject2.classList.add("hidden")
@@ -80,14 +23,14 @@ function changeModeToAdvanced() {
         weatherProject2.classList.remove("hidden")
         weatherProject3.classList.remove("flex")
         weatherProject.classList.add("hidden")
-        weatherProject2.classList.add("block")
+        weatherProject2.classList.add("flex")
         localStorage.setItem("Mode", "Advanced")
     }
 }
 
 function changeModeToEasy() {
     if(weatherProject && weatherProject2) {
-        weatherProject2.classList.remove("block")
+        weatherProject2.classList.remove("flex")
         weatherProject.classList.remove("grid")
         weatherProject3.classList.remove("flex")
         weatherProject2.classList.add("hidden")

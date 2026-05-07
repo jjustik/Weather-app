@@ -6,14 +6,17 @@ let cityInfo = {};
 // ------ STATE & FLAGS ------
 let searchInProcess = false;
 let addingBlockFromButton = false;
+let addingBlockFromSearch = false;
 let timeout = null;
 
 // ------ LOGIC HELPERS ------
 const activeHandlers = [];
 let deletions = [false, false, false, false]
-let currentBtn;
+let currentBtns;
 let deletedIndex;
+let buttonInputValue;
 let nameOfTheCityFromButton;
+let nameOfTheCityFromSearch;
 let cityRenders = {
     cityRendered1: false,
     cityRendered2: false,
@@ -23,15 +26,37 @@ let cityRenders = {
 
 // ------ DOM ELEMENTS ------
 const searchInput = document.querySelector(".search-bar > input")
-const addCityButtonBlock = document.querySelector(".add-city-button-block")
-const addCityButton = document.querySelector(".add-city-button")
+const addCityButtonBlocks = document.querySelectorAll(".add-city-button-block")
 const addCityH1 = document.querySelector(".add-city-button-h1")
-const weatherBlocks = {
+const addCityButton = document.querySelector(".add-city-button")
+const sliderButtons = {
+    right: document.querySelectorAll(".right-arrow"),
+    left: document.querySelectorAll(".left-arrow")
+}
+const weatherBlocks1 = {
     1: document.getElementById("weather-1"),
     2: document.getElementById("weather-2"),
     3: document.getElementById("weather-3"),
     4: document.getElementById("weather-4")
 }
+const weatherBlocks2 = {
+    1: document.getElementById("weather-container-1"),
+    2: document.getElementById("weather-container-2"),
+    3: document.getElementById("weather-container-3"),
+    4: document.getElementById("weather-container-4")
+}
+const weatherBlocks3 = {
+    1: document.getElementById("daily-weather-1"),
+    2: document.getElementById("daily-weather-2"),
+    3: document.getElementById("daily-weather-3"),
+    4: document.getElementById("daily-weather-4")
+}
+
+// ADVANCED SLIDER BUTTON 
+const slides1 = [ Array.from(document.querySelectorAll(".full-weather-container")) ];
+
+// 1-7 DAYS SLIDER BUTTON 
+const slides2 = [ Array.from(document.querySelectorAll(".eight-days-weather")) ];
 
 function weatherSVGs(id) {
     const weatherSVGs = {
@@ -81,6 +106,12 @@ function renderCityWeather(id, data, data2, isButton = false) {
 
     if(!isButton) {
         weatherInfo.name.forEach((el)=> el.textContent = data.name)
+        // ------------ FOR H1 OF ADVANCED WEATHER CONTAINERS-------------
+        document.querySelector(`#weather-container-${id} > .weather-h1`).textContent = data.name;
+        document.querySelector(`#weather-container-${id} > .weather-h1`).classList.add("visible")
+        // ------------ FOR H2 OF DAILY WEATHER CONTAINERS-------------
+        document.querySelector(`#daily-weather-${id} > .weather-h2`).textContent = data.name;
+        document.querySelector(`#daily-weather-${id} > .weather-h2`).classList.add("visible")
     }
     weatherInfo.tempRn.forEach((el)=> el.textContent = Math.round(data.main.temp)+"°")
     weatherInfo.aboutRn.forEach((el)=> el.textContent = data.weather[0].description.replace(/\b\w/g, c => c.toUpperCase()))
@@ -137,59 +168,35 @@ function renderCityWeather(id, data, data2, isButton = false) {
     cityRenders[key] = true;
 }
 
-function clearCityWeather(id) {
-
-    clearUpdateTime(id);
-
-    const weatherInfo = {name: document.querySelectorAll(`.h1-${id}`), tempRn: document.querySelectorAll(`.temp-rn-p-${id}`), aboutRn: document.querySelectorAll(`.about-rn-${id}`), aboutFeels: document.querySelectorAll(`.about-feels-${id}`), wind: document.querySelectorAll(`.wind-${id}`), humidity: document.querySelectorAll(`.humidity-${id}`), visibility: document.querySelectorAll(`.visibility-${id}`), pressure: document.querySelectorAll(`.pressure-${id}`), wd: document.querySelectorAll(`.wd-${id}`), uv: document.querySelectorAll(`.uv-${id}`), dp: document.querySelectorAll(`.dp-${id}`)};
-
-    weatherInfo.name?.forEach((el)=> el.textContent = "")
-    weatherInfo.tempRn.forEach((el)=> el.textContent = "")
-    weatherInfo.aboutRn.forEach((el)=> el.textContent = "")
-    weatherInfo.aboutFeels.forEach((el)=> el.textContent = "")
-    weatherInfo.wind.forEach((el)=> {
-        el.textContent = "";
-    })
-    weatherInfo.humidity.forEach((el)=> el.textContent = "")
-    weatherInfo.visibility.forEach((el)=> el.textContent = "")
-    weatherInfo.pressure.forEach((el)=> el.textContent = "")
-    weatherInfo.uv.forEach((el)=> el.textContent = "")
-    weatherInfo.dp.forEach((el)=> el.textContent = "")
-
-    weatherInfo.wd.forEach((el) => {
-        el.style.backgroundImage = ``;
-    });
-
-    const key = `cityRendered${id}`;
-    cityRenders[key] = false;
-    deletions[id] = true;
-}
-
 function enableCityEditMode(id) {
-    document.querySelectorAll(`.h1-${id}`).forEach((el) => el.innerHTML = `<form id="form-${id}"><input class="button-h1" id="input-${id}" type="text"></form>`);
+    document.querySelectorAll(`.h1-${id}`).forEach((el) => el.innerHTML = `<form class="form-${id}"><input class="button-h1 input-${id}" type="text"></form>`);
+    document.querySelectorAll(`.h2-${id}`).forEach((el) => el.innerHTML = `<form class="form-${id}"><input class="button-h1 input-${id}" type="text"></form>`);
+    document.querySelectorAll(`#weather-container-${id} > .weather-h1`).forEach((el) => el.classList.add("visible"))
+    document.querySelectorAll(`.h2-${id}`).forEach((el) => el.classList.add("visible"))
 }
 
 function disableCityEditMode(id, cityNameButton) {
     document.querySelectorAll(`.h1-${id}`).forEach((el) => el.textContent = cityNameButton);
+    document.querySelectorAll(`.h2-${id}`).forEach((el) => el.textContent = cityNameButton);
 }
 
 function cityHourlyWeather(id, svgIcons, data) {
-
+    
     const hourlyWeatherArray = []
-
+    
     for(i = 1; i < 25; i++) {
         const WeatherInfo = { hourTime: document.querySelector(`.hour-${i}-${id} > .hour-time`), svgContainer: document.querySelector(`.hour-${i}-${id} > .svg-container`), chanceOfPrecipitation: document.querySelector(`.hour-${i}-${id} > .chance-of-precipitation`), hourlyWeatherDeg: document.querySelector(`.hour-${i}-${id} > .hourly-weather-deg`) };
         hourlyWeatherArray.push(WeatherInfo);
     }
-
+    
     for(i = 0; i < 12; i++) {
         hourlyWeatherArray[i].hourTime.textContent = `${i+1} a.m`;
     }
-
+    
     for(i = 0; i < 12; i++) {
         hourlyWeatherArray[i+12].hourTime.textContent = `${i+1} p.m`;
     }
-
+    
     for(i = 0; i < 24; i++) {
         hourlyWeatherArray[i].svgContainer.innerHTML = `${svgIcons[i]}`;
         hourlyWeatherArray[i].chanceOfPrecipitation.textContent = `${data.hourly.precipitation_probability[i]}%`;
@@ -212,6 +219,76 @@ function cityDailyWeather(id, svgIcons, data) {
         dailyWeatherArray[i].dayOfTheWeek.textContent = week[i];
         dailyWeatherArray[i].minMaxTemp.textContent = `${Math.round(data.daily.temperature_2m_min[i])} / ${Math.round(data.daily.temperature_2m_max[i])}`;
         dailyWeatherArray[i].svgContainer.innerHTML = `${svgIcons[i]}`;
+    }
+}
+
+function clearCityWeather(id) {
+
+    clearUpdateTime(id);
+
+    const weatherInfo = {name: document.querySelectorAll(`.h1-${id}`), tempRn: document.querySelectorAll(`.temp-rn-p-${id}`), aboutRn: document.querySelectorAll(`.about-rn-${id}`), aboutFeels: document.querySelectorAll(`.about-feels-${id}`), wind: document.querySelectorAll(`.wind-${id}`), humidity: document.querySelectorAll(`.humidity-${id}`), visibility: document.querySelectorAll(`.visibility-${id}`), pressure: document.querySelectorAll(`.pressure-${id}`), wd: document.querySelectorAll(`.wd-${id}`), uv: document.querySelectorAll(`.uv-${id}`), dp: document.querySelectorAll(`.dp-${id}`)};
+
+    weatherInfo.name?.forEach((el)=> el.textContent = "")
+    document.querySelector(`#weather-container-${id} > .weather-h1`).classList.remove("visible")
+    document.querySelector(`#weather-container-${id} > .weather-h1`).textContent = "Default";
+    weatherInfo.tempRn.forEach((el)=> el.textContent = "")
+    weatherInfo.aboutRn.forEach((el)=> el.textContent = "")
+    weatherInfo.aboutFeels.forEach((el)=> el.textContent = "")
+    weatherInfo.wind.forEach((el)=> {
+        el.textContent = "";
+    })
+    weatherInfo.humidity.forEach((el)=> el.textContent = "")
+    weatherInfo.visibility.forEach((el)=> el.textContent = "")
+    weatherInfo.pressure.forEach((el)=> el.textContent = "")
+    weatherInfo.uv.forEach((el)=> el.textContent = "")
+    weatherInfo.dp.forEach((el)=> el.textContent = "")
+
+    weatherInfo.wd.forEach((el) => {
+        el.style.backgroundImage = ``;
+    });
+
+    const key = `cityRendered${id}`;
+    cityRenders[key] = false;
+    deletions[id] = true;
+}
+
+function clearCityHourlyWeather(id) {
+    
+    const hourlyWeatherArray = []
+    
+    for(i = 1; i < 25; i++) {
+        const WeatherInfo = { hourTime: document.querySelector(`.hour-${i}-${id} > .hour-time`), svgContainer: document.querySelector(`.hour-${i}-${id} > .svg-container`), chanceOfPrecipitation: document.querySelector(`.hour-${i}-${id} > .chance-of-precipitation`), hourlyWeatherDeg: document.querySelector(`.hour-${i}-${id} > .hourly-weather-deg`) };
+        hourlyWeatherArray.push(WeatherInfo);
+    }
+    
+    for(i = 0; i < 12; i++) {
+        hourlyWeatherArray[i].hourTime.textContent = "";
+    }
+    
+    for(i = 0; i < 12; i++) {
+        hourlyWeatherArray[i+12].hourTime.textContent = "";
+    }
+    
+    for(i = 0; i < 24; i++) {
+        hourlyWeatherArray[i].svgContainer.innerHTML = "";
+        hourlyWeatherArray[i].chanceOfPrecipitation.textContent = "";
+        hourlyWeatherArray[i].hourlyWeatherDeg.textContent = "";
+    }
+}
+
+function clearCityDailyWeather(id) {
+
+    const dailyWeatherArray = []
+
+    for(i = 1; i < 9; i++) {
+        const WeatherInfo = { dayOfTheWeek: document.querySelector(`.day-${i}-${id} > .day-of-the-week`), minMaxTemp: document.querySelector(`.day-${i}-${id} > .min-max-temp`), svgContainer: document.querySelector(`.day-${i}-${id} > .svg-container-2`) };
+        dailyWeatherArray.push(WeatherInfo);
+    }
+
+    for(i = 0; i < 8; i++) {
+        dailyWeatherArray[i].dayOfTheWeek.textContent = "";
+        dailyWeatherArray[i].minMaxTemp.textContent = "";
+        dailyWeatherArray[i].svgContainer.innerHTML = "";
     }
 }
 
@@ -498,24 +575,48 @@ for(let i = 1; i <= 4; i++) {
 }
 
 function hideBlock() {
-    addCityButtonBlock.classList.add("hidden");
+    const buttonBlockContainer = document.querySelector(".block-container")
+    buttonBlockContainer?.classList.add("hidden")
+    addCityButtonBlocks.forEach(block => {
+        block.classList.add("hidden")
+    })
 }
 
 function showBlock() {
-    addCityButtonBlock.classList.remove("hidden");
+    const buttonBlockContainer = document.querySelector(".block-container")
+    buttonBlockContainer?.classList.remove("hidden")
+    addCityButtonBlocks.forEach(block => {
+        block.classList.remove("hidden")
+    })
 }
 
 function hideButtonH1() {
-    addCityH1.classList.add("hidden");
-    addCityButton.classList.add("self-center");
+    addCityH1.classList.add("hidden")
+    addCityButton.classList.add("self-center")
 }
 
 function showButtonH1() {
-    addCityH1.classList.remove("hidden");
-    addCityButton.classList.remove("self-center");
+    addCityH1.classList.remove("hidden")
+    addCityButton.classList.remove("self-center")
 }
 
-function renderAddButton() {
+function hideSliderButtons() {
+    for(let key in sliderButtons) {
+        sliderButtons[key].forEach(key => {
+            key.classList.add("hidden")
+        })
+    }
+}
+
+function showSliderButtons() {
+    for(let key in sliderButtons) {
+        sliderButtons[key].forEach(key => {
+            key.classList.remove("hidden")
+        })
+    }
+}
+
+function renderAddButton1() {
     if(Cities.length === 0) {
         showBlock()
         showButtonH1()
@@ -529,6 +630,70 @@ function renderAddButton() {
     }
 }
 
+function renderAddButton(data, deleted = false) {
+    for(let i = 1; i < 5; i++) {
+        const weatherContainerH1 = data[i].querySelector(`.weather-h1`)
+        const weatherContainerH2 = data[i].querySelector(`.weather-h2`)
+        const weatherContainer = data[i].querySelector(`.weather-container`)
+        const dailyWeatherContainer = data[i].querySelector(`.eight-days-weather-container`)
+        const weatherContainerAddButton = data[i].querySelector(`.add-city-button-block-1`)
+
+        if(deleted) {
+            if(!data[i].classList.contains("opacity")) {
+            data[i].classList.add("block-container")
+            weatherContainerH1?.classList.add("hidden");
+            weatherContainerH2?.classList.add("hidden")
+            weatherContainer?.classList.add("hidden");
+            dailyWeatherContainer?.classList.add("hidden")
+            weatherContainerAddButton.classList.add("grid")
+            data[i].classList.remove("hidden")
+            data[i].classList.add("opacity")
+            break;
+            }
+        }
+        else {
+        } if(data[i].classList.contains("hidden")) {
+            data[i].classList.add("block-container")
+            weatherContainerH1?.classList.add("hidden");
+            weatherContainerH2?.classList.add("hidden")
+            weatherContainer?.classList.add("hidden");
+            dailyWeatherContainer?.classList.add("hidden")
+            weatherContainerAddButton.classList.add("grid")
+            data[i].classList.remove("hidden")
+            data[i].classList.add("opacity")
+            break;
+        }
+    }
+}
+
+function hideAddButton(data) {
+    for(let i = 1; i <= 4; i++) {
+        if(data[i].classList.contains("block-container")) {
+            data[i].classList.remove("block-container")
+            const weatherContainerH1 = data[i].querySelector(`.weather-h1`)
+            const weatherContainer = data[i].querySelector(`.weather-container`)
+            const weatherContainerH2 = data[i].querySelector(`.weather-h2`)
+            const dailyWeatherContainer = data[i].querySelector(`.eight-days-weather-container`)
+            const weatherContainerAddButton = data[i].querySelector(`.add-city-button-block-1`)
+            weatherContainerH1?.classList.remove("hidden");
+            weatherContainerH2?.classList.remove("hidden");
+            weatherContainer?.classList.remove("hidden");
+            dailyWeatherContainer?.classList.remove("hidden");
+            weatherContainerAddButton.classList.remove("grid")
+            data[i].classList.remove("opacity")
+        }
+    }
+}
+
+function renderSliderButtons() {
+    if(Cities.length >= 1 || addingBlockFromSearch) {
+        showSliderButtons();
+    }
+    else {
+        hideSliderButtons();
+    }
+}
+
 async function buttonFetchWeatherNew(id) {
     try {
         const res = await fetch(`/api/get-weather?city=${cityInfo.name}`);
@@ -536,7 +701,19 @@ async function buttonFetchWeatherNew(id) {
         const data = await res.json();
         const data2 = await res2.json();
 
+        if (!res.ok) {
+            if (res.status === 404) {
+                renderAddButton(weatherBlocks2, true);
+                renderAddButton(weatherBlocks3, true);
+                console.error("Город не найден (404)");
+                return;
+            }
+            throw new Error(`Ошибка сервера: ${res.status}`);
+        }
+
         renderCityWeather(id, data, data2, true)
+        fetchDailyWeatherNew(true);
+        fetchHourlyWeatherNew(true);
         nameOfTheCityFromButton = data.name;
     }
     catch(err) {
@@ -564,6 +741,7 @@ async function searchForCity(input) {
         console.log(cityInfo)
         if(!cityNameCheck) {
             addingBlockFromButton = false;
+            addingBlockFromSearch = true;
             fetchWeatherNew()
         }
     }
@@ -595,80 +773,281 @@ async function searchForCityWithButton(input, id) {
 
 function findTheWeatherBlock(data, data2) {
     for(let i = 1; i <= 4; i++) {
-        if(!weatherBlocks[i].classList.contains("grid")) {
+        if(!weatherBlocks1[i].classList.contains("opacity")) {
             let index = i-1;
             renderCityWeather(i, data, data2);
-            weatherBlocks[i].classList.add("grid")
-            weatherBlocks[i].classList.add("opacity")
-            currentBtn = document.getElementById(`btn-${i}`);
-            if(currentBtn.dataset.hasH1Listener) {
-                currentBtn?.removeEventListener("click", ()=> {
-                    disableCityEditMode(i, nameOfTheCityFromButton);
-                })
-                delete currentBtn.dataset.hasH1Listener;
-            }
-            if(!currentBtn.dataset.hasListener) {
-                currentBtn?.addEventListener("click", addRemoveCity)
-                currentBtn.dataset.hasListener = "true";
-            }
+            weatherBlocks1[i].classList.add("grid")
+            currentBtns = document.querySelectorAll(`.btn-${i}`);
+            currentBtns.forEach(currentBtn => {
+                if(!currentBtn.dataset.hasListener) {
+                    currentBtn?.addEventListener("click", addRemoveCity)
+                    currentBtn.dataset.hasListener = "true";
+                }
+            })
             deletedIndex = index;
             break;
         }
     }
+}
+
+function findTheHourlyWeatherBlock(data, data2, icons, button = false) {
+    let index;
+    if(!button) {
+        for(let i = 1; i <= 4; i++) {
+            if(weatherBlocks2[i].classList.contains("block-container")) {
+                index = i-1;
+                break;
+            }
+        }
+    }
+    else {
+        for(let i = 4; i >= 1; i--) {
+            if(weatherBlocks2[i].classList.contains("opacity")) {
+                index = i-1;
+                break;
+            }
+        }
+    }
+    const i = index+1;
+    const svgIcons = icons.map((iconName, index1) => {
+        const uniqueId = `grad-${index1}-${index+1}`;
+        const allIcons = weatherSVGs(uniqueId); 
+        return allIcons[iconName] || allIcons["cloudy"];
+    });
+    cityHourlyWeather(index+1, svgIcons, data2)
+    const weatherContainerH1 = weatherBlocks2[i].querySelector(`.weather-h1`)
+    const weatherContainer = weatherBlocks2[i].querySelector(`.weather-container`)
+    const weatherContainerAddButton = weatherBlocks2[i].querySelector(`.add-city-button-block-1`)
+    weatherContainerH1.classList.remove("hidden");
+    weatherContainer.classList.remove("hidden");
+    weatherContainerAddButton.classList.remove("grid")
+    weatherBlocks2[i].classList.remove("block-container");
+    weatherBlocks2[i].classList.remove("hidden")
+    if(!button) {
+        weatherBlocks2[i].classList.remove("opacity")
+    }
+    currentBtns = document.querySelectorAll(`.btn-${i}`);
+    currentBtns.forEach(currentBtn => {
+        if(!currentBtn.dataset.hasListener) {
+            currentBtn?.addEventListener("click", addRemoveCity)
+            currentBtn.dataset.hasListener = "true";
+        }
+    })
+    deletedIndex = index;
+}
+
+function findTheDailyWeatherBlock(data, data2, icons, button = false) {
+    let index;
+    if(!button) {
+        for(let i = 1; i <= 4; i++) {
+            if(weatherBlocks3[i].classList.contains("block-container")) {
+                index = i-1;
+                break;
+            }
+        }
+    }
+    else {
+        for(let i = 4; i >= 1; i--) {
+            if(weatherBlocks3[i].classList.contains("opacity")) {
+                index = i-1;
+                break;
+            }
+        }
+    }
+    const i = index+1;
+    const svgIcons = icons.map((iconName, index1) => {
+        const uniqueId = `grad-${index1}-${index+5}`;
+        const allIcons = weatherSVGs(uniqueId); 
+        return allIcons[iconName] || allIcons["cloudy"];
+    });
+    cityDailyWeather(index+1, svgIcons, data2)
+    const weatherContainerH2 = weatherBlocks3[i].querySelector(`.weather-h2`)
+    const dailyWeatherContainer = weatherBlocks3[i].querySelector(`.eight-days-weather-container`)
+    const weatherContainerAddButton = weatherBlocks3[i].querySelector(`.add-city-button-block-1`)
+    weatherContainerH2.classList.remove("hidden");
+    dailyWeatherContainer.classList.remove("hidden");
+    weatherContainerAddButton.classList.remove("grid")
+    weatherBlocks3[i].classList.remove("block-container");
+    weatherBlocks3[i].classList.remove("hidden")
+    if(!button) {
+        weatherBlocks3[i].classList.remove("opacity")
+    }
+    currentBtns = document.querySelectorAll(`.btn-${i}`);
+    currentBtns.forEach(currentBtn => {
+        if(!currentBtn.dataset.hasListener) {
+            currentBtn?.addEventListener("click", addRemoveCity)
+            currentBtn.dataset.hasListener = "true";
+        }
+    })
+    deletedIndex = index;
+}
+
+function deleteNewWeatherBlock() {
+    weatherBlocks1[deletedIndex+1].classList.remove("grid")
+    weatherBlocks1[deletedIndex+1].classList.remove("opacity")
+    renderAddButton(weatherBlocks2, true)
+    renderAddButton(weatherBlocks3, true)
+    clearCityWeather(deletedIndex+1);
+    clearCityHourlyWeather(deletedIndex+1)
+    clearCityDailyWeather(deletedIndex+1)
 }
 
 function checkInputH1() {
     for(let i = 1; i <= 4; i++) {
         let index = i-1;
         if(deletedIndex === index) {
-            let inputH1 = document.getElementById(`input-${i}`)
-            let formH1 = document.getElementById(`form-${i}`)
-            let btn = document.getElementById(`btn-${i}`)
-            formH1?.addEventListener("submit", activeHandlers[index].prevent)
-            formH1?.addEventListener("submit", activeHandlers[index].h1)
-            formH1?.addEventListener("submit", activeHandlers[index].city)
-            if(!btn.dataset.hasH1Listener) {
-                btn?.addEventListener("click", activeHandlers[index].h1)
-                btn.dataset.hasH1Listener = "true";
-            }
-            if(!btn.dataset.hasListener) {
-                btn?.addEventListener("click", activeHandlers[index].city)
-                btn.dataset.hasListener = "true";
-            }
+            let formH1s = document.querySelectorAll(`.form-${i}`)
+            let btns = document.querySelectorAll(`.btn-${i}`)
+            formH1s.forEach(formH1 => {
+                formH1?.addEventListener("submit", activeHandlers[index].prevent)
+                formH1?.addEventListener("submit", activeHandlers[index].h1)
+                formH1?.addEventListener("submit", activeHandlers[index].city)
+            })
+            btns.forEach(btn => {
+                if(!btn.dataset.hasH1Listener) {
+                    btn?.addEventListener("click", activeHandlers[index].h1)
+                    btn.dataset.hasH1Listener = "true";
+                }
+                if(!btn.dataset.hasListener) {
+                    btn?.addEventListener("click", activeHandlers[index].city)
+                    btn.dataset.hasListener = "true";
+                }
+            })
             break;
         }
     }
 }
 
-function findTheWeatherBlockButton() {
+function antiCheckInputH1() {
     for(let i = 1; i <= 4; i++) {
-        if(!weatherBlocks[i].classList.contains("grid")) {
-            enableCityEditMode(i)
-            let inputH1 = document.getElementById(`input-${i}`)
-            let formH1 = document.getElementById(`form-${i}`)
-            let index = i-1;
-            currentBtn = document.getElementById(`btn-${i}`);
-            currentBtn.removeEventListener("click", addRemoveCity)
-            inputH1?.addEventListener("input", ()=> {
-                clearTimeout(timeout)
-                timeout = setTimeout(() => {
-                    searchForCityWithButton(inputH1, i);
-                }, 500);
+        let index = i-1;
+        if(deletedIndex === index) {
+            let formH1s = document.querySelectorAll(`.form-${i}`)
+            let btns = document.querySelectorAll(`.btn-${i}`)
+            formH1s.forEach(formH1 => {
+                formH1?.removeEventListener("submit", activeHandlers[index].h1)
+                formH1?.removeEventListener("submit", activeHandlers[index].city)
             })
-            formH1?.addEventListener("submit", activeHandlers[index].prevent)
-            if(currentBtn.dataset.hasH1Listener) {
-                currentBtn?.removeEventListener("click", activeHandlers[index].h1)
-                delete currentBtn.dataset.hasH1Listener;
-            }
-            if(currentBtn.dataset.hasListener) {
-                currentBtn?.removeEventListener("click", activeHandlers[index].city)
-                delete currentBtn.dataset.hasListener;
-            }
-            weatherBlocks[i].classList.add("grid")
-            weatherBlocks[i].classList.add("opacity")
+            btns.forEach(btn => {
+                if(btn.dataset.hasH1Listener) {
+                    btn?.removeEventListener("click", activeHandlers[index].h1)
+                    delete btn.dataset.hasH1Listener;
+                }
+                if(btn.dataset.hasListener) {
+                    btn?.removeEventListener("click", activeHandlers[index].city)
+                    delete btn.dataset.hasListener;
+                }
+            })
+            break;
+        }
+    }
+}
+
+function syncButtonInputs(e) {
+    const inputs = document.querySelectorAll(".weather-project-2 input, .weather-project input, .weather-project-3 input");
+    inputs.forEach(input => {
+        if(input !== e.target) {
+            input.value = e.target.value;
+        }
+    })
+}
+
+function findTheWeatherBlockButton1() {
+    for(let i = 1; i <= 4; i++) {
+        if(!weatherBlocks1[i].classList.contains("grid")) {
+            hideBlock();
+            enableCityEditMode(i)
+            let inputH1s = document.querySelectorAll(`.input-${i}`)
+            let formH1s = document.querySelectorAll(`.form-${i}`)
+            let index = i-1;
+            currentBtns = document.querySelectorAll(`.btn-${i}`);
+            currentBtns.forEach(currentBtn => {
+                currentBtn.removeEventListener("click", addRemoveCity)
+                if(currentBtn.dataset.hasH1Listener) {
+                    currentBtn?.removeEventListener("click", activeHandlers[index].h1)
+                    delete currentBtn.dataset.hasH1Listener;
+                }
+                if(currentBtn.dataset.hasListener) {
+                    currentBtn?.removeEventListener("click", activeHandlers[index].city)
+                    delete currentBtn.dataset.hasListener;
+                }
+            })
+            inputH1s.forEach(inputH1 => {
+                inputH1?.addEventListener("input", (e)=> {
+                    syncButtonInputs(e)
+                    antiCheckInputH1();
+                    clearTimeout(timeout)
+                    timeout = setTimeout(() => {
+                        searchForCityWithButton(inputH1, i);
+                    }, 500);
+                })
+            })
+            formH1s.forEach(formH1 => {
+                formH1?.addEventListener("submit", activeHandlers[index].prevent)
+            })
+            weatherBlocks1[i].classList.add("grid")
+            weatherBlocks1[i].classList.add("opacity")
             deletedIndex = index;
             addingBlockFromButton = true;
             break;
+        }
+    }
+}
+
+function findTheWeatherBlockButton(data) {
+    for(let i = 1; i <= 4; i++) {
+        if(data[i].classList.contains("block-container")) {
+            data[i].classList.remove("hidden")
+            enableCityEditMode(i)
+            let inputH1s = document.querySelectorAll(`.input-${i}`)
+            let formH1s = document.querySelectorAll(`.form-${i}`)
+            let index = i-1;
+            currentBtns = document.querySelectorAll(`.btn-${i}`);
+            currentBtns.forEach(currentBtn => {
+                currentBtn.removeEventListener("click", addRemoveCity)
+                if(currentBtn.dataset.hasH1Listener) {
+                    currentBtn?.removeEventListener("click", activeHandlers[index].h1)
+                    delete currentBtn.dataset.hasH1Listener;
+                }
+                if(currentBtn.dataset.hasListener) {
+                    currentBtn?.removeEventListener("click", activeHandlers[index].city)
+                    delete currentBtn.dataset.hasListener;
+                }
+            })
+            inputH1s.forEach(inputH1 => {
+                inputH1?.addEventListener("input", (e)=> {
+                    syncButtonInputs(e)
+                    antiCheckInputH1();
+                    clearTimeout(timeout)
+                    timeout = setTimeout(() => {
+                        searchForCityWithButton(inputH1, i);
+                    }, 500);
+                })
+            })
+            formH1s.forEach(formH1 => {
+                formH1?.addEventListener("submit", activeHandlers[index].prevent)
+            })
+            hideAddButton(data)
+            data[i].classList.add("opacity")
+            deletedIndex = index;
+            addingBlockFromButton = true;
+            break;
+        }
+    }
+}
+
+function addEventListenerForAddButton(data) {
+    for(let i = 1; i <= 4; i++) {
+        if(data[i].classList.contains("block-container")) {
+            const addCityButton = data[i].querySelector(".add-city-button")
+            if(!addCityButton.dataset.hasListener) {
+                addCityButton.addEventListener("click", ()=> {
+                    findTheWeatherBlockButton(weatherBlocks2)
+                    findTheWeatherBlockButton(weatherBlocks3)
+                    findTheWeatherBlockButton1()
+                })
+                addCityButton.dataset.hasListener = "true";
+            }
         }
     }
 }
@@ -691,8 +1070,52 @@ async function fetchWeatherNew() {
         const data = await res.json();
         const data2 = await res2.json();
 
+        if (!res.ok) {
+            if (res.status === 404) {
+                renderAddButton(weatherBlocks2, true);
+                renderAddButton(weatherBlocks3, true);
+                console.error("Город не найден (404)");
+                return;
+            }
+            throw new Error(`Ошибка сервера: ${res.status}`);
+        }
+
         findTheWeatherBlock(data, data2)
+        fetchHourlyWeatherNew();
+        fetchDailyWeatherNew();
         hideBlock()
+
+    } catch(err) {
+        console.log(`error ${err}`)
+    }
+}
+
+async function fetchHourlyWeatherNew(button = false) {
+    try {
+        const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${cityInfo.name}&count=1&format=json`);
+        const data = await res.json();
+        const res2 = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${cityInfo.lat}&longitude=${cityInfo.long}&hourly=weathercode,is_day,temperature_2m,precipitation_probability,cloudcover&timezone=auto&forecast_days=1`)
+        const data2 = await res2.json();
+
+        const icons = await fetchWeatherIcons(cityInfo.lat, cityInfo.long)
+
+        findTheHourlyWeatherBlock(data, data2, icons, button)
+
+    } catch(err) {
+        console.log(`error ${err}`)
+    }
+}
+
+async function fetchDailyWeatherNew(button = false) {
+    try {
+        const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${cityInfo.name}&count=1&format=json`);
+        const data = await res.json();
+        const res2 = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${cityInfo.lat}&longitude=${cityInfo.long}&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=8`)
+        const data2 = await res2.json();
+
+        const icons = await fetchWeatherIcons(cityInfo.lat, cityInfo.long)
+
+        findTheDailyWeatherBlock(data, data2, icons, button)
 
     } catch(err) {
         console.log(`error ${err}`)
@@ -702,12 +1125,17 @@ async function fetchWeatherNew() {
 function addRemoveCity(e) {
     const cityName = e?.currentTarget?.dataset?.cityName || cityInfo.name;
     const number = e?.currentTarget?.dataset?.number;
-    btn1 = document.getElementById(`btn-${number}`);
+    let btns = document.querySelectorAll(`.btn-${number}`);
     if (!Cities.includes(cityName) && Cities.length < 4) {
         deletions.includes(true) ? Cities.splice(deletedIndex, 0, cityInfo.name) : Cities.push(cityInfo.name);
-        currentBtn.innerHTML = `<svg class="remove-svg" xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="#434343"><path d="M200-446.67v-66.66h560v66.66H200Z"/></svg>`
-        currentBtn.parentElement.classList.add("opacity");
+        currentBtns.forEach(currentBtn => {
+            currentBtn.innerHTML = `<svg class="remove-svg" xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="#434343"><path d="M200-446.67v-66.66h560v66.66H200Z"/></svg>`
+            currentBtn.closest(".weather")?.classList.add("opacity");
+            currentBtn.closest(".full-weather-container")?.classList.add("opacity");
+            currentBtn.closest(".eight-days-weather")?.classList.add("opacity");
+        })
         addingBlockFromButton = false;
+        findingTheWeatherBlock = false;
         getIndexForButtons();
         saveCities();
     }
@@ -715,10 +1143,19 @@ function addRemoveCity(e) {
         let indexOfRemovedCity = Cities.indexOf(cityName)
         Cities = Cities.filter(city => city !== cityName);
         if (indexOfRemovedCity !== -1) {
-            btn1.parentElement.classList.remove("grid")
-            btn1.parentElement.classList.remove("opacity");
-            btn1.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="#434343"><path d="M446.67-446.67H200v-66.66h246.67V-760h66.66v246.67H760v66.66H513.33V-200h-66.66v-246.67Z"/></svg>`
+            btns.forEach(btn => {
+                btn?.removeEventListener("click", activeHandlers[number-1].h1)
+                btn.closest(".weather")?.classList.remove("grid")
+                btn.closest(".weather")?.classList.remove("opacity")
+                btn.closest(".full-weather-container")?.classList.add("hidden")
+                btn.closest(".eight-days-weather")?.classList.add("hidden")
+                hideAddButton(weatherBlocks2);
+                hideAddButton(weatherBlocks3);
+                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="#434343"><path d="M446.67-446.67H200v-66.66h246.67V-760h66.66v246.67H760v66.66H513.33V-200h-66.66v-246.67Z"/></svg>`
+            })
             clearCityWeather(number);
+            clearCityHourlyWeather(number);
+            clearCityDailyWeather(number)
             if(!addingBlockFromButton) {
                 findDeletedWeatherBlocks();
             }
@@ -726,8 +1163,13 @@ function addRemoveCity(e) {
         saveCities();
     }
     if(!addingBlockFromButton) {
-        renderAddButton();
+        renderAddButton1();
+        renderAddButton(weatherBlocks2);
+        renderAddButton(weatherBlocks3);
+        addEventListenerForAddButton(weatherBlocks2)
+        addEventListenerForAddButton(weatherBlocks3)
     }
+    renderSliderButtons();
 }
 
 async function renderCitiesWeather() {
@@ -737,11 +1179,12 @@ async function renderCitiesWeather() {
                 const weatherBlock = document.getElementById(`weather-${index+1}`);
                 weatherBlock.classList.add("grid")
                 weatherBlock.classList.add("opacity")
-                const currentBtn = document.getElementById(`btn-${index+1}`)
-                currentBtn.innerHTML = `<svg class="remove-svg" xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="#434343"><path d="M200-446.67v-66.66h560v66.66H200Z"/></svg>`
-                const url = `https://geocoding-api.open-meteo.com/v1/search?name=${city}&count=1&format=json`
+                const currentBtns = document.querySelectorAll(`.btn-${index+1}`)
+                currentBtns.forEach(currentBtn => {
+                    currentBtn.innerHTML = `<svg class="remove-svg" xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="#434343"><path d="M200-446.67v-66.66h560v66.66H200Z"/></svg>`
+                })
                 const res = await fetch(`/api/get-weather?city=${city}`);
-                const res2 = await fetch(url)
+                const res2 = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${city}&count=1&format=json`)
                 const data = await res.json();
                 const data2 = await res2.json();
                 const cityInfoData = data2.results[0];
@@ -754,8 +1197,90 @@ async function renderCitiesWeather() {
     
                 renderCityWeather(index+1, data, data3);
                 searchInProcess = false;
-                currentBtn.removeEventListener("click", addRemoveCity);
-                currentBtn.addEventListener("click", addRemoveCity);
+                currentBtns.forEach(currentBtn => {
+                    currentBtn.removeEventListener("click", addRemoveCity);
+                    currentBtn.addEventListener("click", addRemoveCity);
+                })
+            } catch(err) {
+                console.log(`error ${err}`)
+            }
+        })();
+    }
+}
+
+async function renderHourlyCitiesWeather() {
+    for(const [index, city] of Cities.entries()) {
+        (async function cityrender() {
+            try {
+                const weatherContainer = document.getElementById(`weather-container-${index+1}`);
+                weatherContainer.classList.remove("hidden")
+                weatherContainer.classList.add("opacity")
+                const currentBtns = document.querySelectorAll(`.btn-${index+1}`)
+                currentBtns.forEach(currentBtn => {
+                    currentBtn.innerHTML = `<svg class="remove-svg" xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="#434343"><path d="M200-446.67v-66.66h560v66.66H200Z"/></svg>`
+                })
+                const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${city}&count=1&format=json`);
+                const data = await res.json();
+                const cityInfoData = data.results[0];
+                let cityInfo = {
+                    lat: cityInfoData.latitude,
+                    long: cityInfoData.longitude
+                };
+                const res2 = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${cityInfo.lat}&longitude=${cityInfo.long}&hourly=weathercode,is_day,temperature_2m,precipitation_probability,cloudcover&timezone=auto&forecast_days=1`)
+                const data2 = await res2.json();
+    
+                const icons = await fetchWeatherIcons(cityInfo.lat, cityInfo.long)
+                const svgIcons = icons.map((iconName, index1) => {
+                    const uniqueId = `grad-${index1}-${index+1}`;
+                    const allIcons = weatherSVGs(uniqueId); 
+                    return allIcons[iconName] || allIcons["cloudy"];
+                });
+                cityHourlyWeather(index+1, svgIcons, data2)
+                searchInProcess = false;
+                currentBtns.forEach(currentBtn => {
+                    currentBtn.removeEventListener("click", addRemoveCity);
+                    currentBtn.addEventListener("click", addRemoveCity);
+                })
+            } catch(err) {
+                console.log(`error ${err}`)
+            }
+        })();
+    }
+}
+
+async function renderDailyCitiesWeather() {
+    for(const [index, city] of Cities.entries()) {
+        (async function cityrender() {
+            try {
+                const dailyWeatherContainer = document.getElementById(`daily-weather-${index+1}`);
+                dailyWeatherContainer.classList.remove("hidden")
+                dailyWeatherContainer.classList.add("opacity")
+                const currentBtns = document.querySelectorAll(`.btn-${index+1}`)
+                currentBtns.forEach(currentBtn => {
+                    currentBtn.innerHTML = `<svg class="remove-svg" xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="#434343"><path d="M200-446.67v-66.66h560v66.66H200Z"/></svg>`
+                })
+                const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${city}&count=1&format=json`);
+                const data = await res.json();
+                const cityInfoData = data.results[0];
+                let cityInfo = {
+                    lat: cityInfoData.latitude,
+                    long: cityInfoData.longitude
+                };
+                const res2 = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${cityInfo.lat}&longitude=${cityInfo.long}&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=8`)
+                const data2 = await res2.json();
+    
+                const icons = await fetchWeatherIcons(cityInfo.lat, cityInfo.long)
+                const svgIcons = icons.map((iconName, index1) => {
+                    const uniqueId = `grad-${index1}-${index+5}`;
+                    const allIcons = weatherSVGs(uniqueId); 
+                    return allIcons[iconName] || allIcons["cloudy"];
+                });
+                cityDailyWeather(index+1, svgIcons, data2)
+                searchInProcess = false;
+                currentBtns.forEach(currentBtn => {
+                    currentBtn.removeEventListener("click", addRemoveCity);
+                    currentBtn.addEventListener("click", addRemoveCity);
+                })
             } catch(err) {
                 console.log(`error ${err}`)
             }
@@ -765,9 +1290,11 @@ async function renderCitiesWeather() {
 
 function getIndexForButtons() {
     Cities.forEach((city, index) => {
-        const currentBtn = document.getElementById(`btn-${index+1}`)
-        currentBtn.dataset.cityName = city;
-        currentBtn.dataset.number = index+1;
+        const currentBtns = document.querySelectorAll(`.btn-${index+1}`)
+        currentBtns.forEach(currentBtn => {
+            currentBtn.dataset.cityName = city;
+            currentBtn.dataset.number = index+1;
+        })
     })
 }
 
@@ -779,24 +1306,6 @@ function saveCities() {
 function loadCities() {
     const CitiesStorage = localStorage.getItem("Cities");
     return JSON.parse(CitiesStorage) || [];
-}
-
-async function fetchHourlyWatherKharkiv() {
-    const url = "https://api.open-meteo.com/v1/forecast?latitude=49.9808&longitude=36.2527&hourly=weathercode,is_day,temperature_2m,precipitation_probability,cloudcover&timezone=auto&forecast_days=1";
-    try {
-        const res = await fetch(url);
-        const data = await res.json();
-        const icons = await fetchWeatherIcons(49.9808, 36.2527)
-        const svgIcons = icons.map((iconName, index) => {
-            const uniqueId = `grad-${index}-1`;
-            const allIcons = weatherSVGs(uniqueId); 
-            return allIcons[iconName] || allIcons["cloudy"];
-        });
-        cityHourlyWeather(1, svgIcons, data)
-    }
-    catch(err) {
-        console.log(`error ${err}`)
-    }
 }
 
 async function fetchDailyWatherKharkiv() {
@@ -817,12 +1326,83 @@ async function fetchDailyWatherKharkiv() {
     }
 }
 
+// ----------- SLIDER FOR ADVANCED MODE -------------
+function getCurrentIndex(collection) {
+    return collection.findIndex(slide => slide.classList.contains("displaySlide")) || 0;
+}
+
+function weatherScroll(collection, state, i, dir) {
+    if (collection.length === 0) return;
+
+    state[i] = getCurrentIndex(collection);
+
+    collection[state[i]].classList.remove("displaySlide");
+
+    do {
+        state[i] =
+            dir === "right"
+                ? (state[i] + 1) % collection.length
+                : (state[i] - 1 + collection.length) % collection.length;
+    } while (collection[state[i]].classList.contains("hidden"))
+
+    const curr = collection[state[i]];
+
+    curr.classList.remove("slideIn", "slideInB", "reverseSlideIn");
+    void curr.offsetWidth;
+
+    if (dir === "right") {
+        curr.classList.contains("opacity") ? curr.classList.add("slideInB") : curr.classList.add("slideInNoOpacity");
+        setTimeout(() => {
+            curr.classList.remove("slideInB")
+            curr.classList.remove("slideInNoOpacity")
+        }, 800);
+    } else {
+        curr.classList.contains("opacity") ? curr.classList.add("reverseSlideIn") : curr.classList.add("reverseSlideInNoOpacity");
+        setTimeout(() => {
+            curr.classList.remove("reverseSlideIn")
+            curr.classList.remove("reverseSlideInNoOpacity")
+        }, 800);
+    }
+
+    curr.classList.add("displaySlide");
+}
+
+function initMySlider(rightBtnId, leftBtnId, collections) {
+    const state = new Array(collections.length).fill(0);
+
+    const r_buttons1 = document.getElementById(rightBtnId);
+    const l_buttons1 = document.getElementById(leftBtnId);
+
+    collections.forEach((col) => {
+        if (col.length > 0) col[0].classList.add("displaySlide");
+    });
+
+    r_buttons1?.addEventListener("click", () => {
+        collections.forEach((col, i) => weatherScroll(col, state, i, "right"));
+    });
+    
+    l_buttons1?.addEventListener("click", () => {
+        collections.forEach((col, i) => weatherScroll(col, state, i, "left"));
+    });
+}
+
+// ----------- SLIDER FOR 1-7 DAYS MODE -------------
+
 
 document.addEventListener("DOMContentLoaded", ()=> {
     loadCities();
     getIndexForButtons();
     renderCitiesWeather();
-    renderAddButton();
+    renderHourlyCitiesWeather();
+    renderDailyCitiesWeather();
+    renderAddButton1();
+    renderAddButton(weatherBlocks2);
+    renderAddButton(weatherBlocks3);
+    renderSliderButtons();
+    initMySlider("w-arrow1", "w-arrow2", slides1);
+    initMySlider("w-arrow3", "w-arrow4", slides2);
+    addEventListenerForAddButton(weatherBlocks2);
+    addEventListenerForAddButton(weatherBlocks3);
     // fetchWeatherKharkiv();
     // fetchHourlyWatherKharkiv();
     // fetchDailyWatherKharkiv();
@@ -845,9 +1425,17 @@ document.addEventListener("DOMContentLoaded", ()=> {
                 searchForCity(searchInput);
             }, 500)
         }
+        else {
+            if(!Cities.includes(cityInfo.name)) {
+                deleteNewWeatherBlock();
+                renderAddButton1();
+                renderSliderButtons();
+            }
+        }
     })
     addCityButton.addEventListener("click", ()=> {
-        findTheWeatherBlockButton();
-        hideBlock();
+        findTheWeatherBlockButton(weatherBlocks2);
+        findTheWeatherBlockButton(weatherBlocks3);
+        findTheWeatherBlockButton1();
     })
 })

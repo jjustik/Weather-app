@@ -153,6 +153,29 @@
     }
 }
 
+@keyframes slideInNoOpacity {
+    0% {
+        transform: translateX(-10%);
+        opacity: 0.5;
+    }
+    100% {
+        transform: translateX(0);
+        opacity: 0.8;
+    }
+}
+
+@keyframes reverseSlideInNoOpacity {
+    0% {
+        transform: translateX(10%);
+        opacity: 0.5;
+    }
+    100% {
+        transform: translateX(0);
+        opacity: 0.8;
+    }
+}
+
+
 * {
     margin: 0;
     padding: 0;
@@ -392,7 +415,10 @@ nav a {
 }
 
 .weather-project-2 {
+    width: 95%;
     display: none;
+    justify-content: center;
+    height: 27.5em;
     position: relative;
 }
 
@@ -408,23 +434,35 @@ nav a {
     text-align: center;
 }
 
-.kharkiv-8days-weather-container, .zabrze-8days-weather-container, .gottmadingen-8days-weather-container, .sandanski-8days-weather-container, .daily-weather {
+.eight-days-weather-container, .daily-weather {
+    position: relative;
     display: flex;
     flex-direction: row;
 }
 
-.kharkiv-8days-weather, .zabrze-8days-weather, .gottmadingen-8days-weather, .sandanski-8days-weather {
+.eight-days-weather {
+    position: relative;
+    display: none;
+    opacity: 0.8;
     width: 60vw;
     margin: 0 auto;
+    z-index: 1;
 }
 
-.kharkiv-8days-weather-container , .zabrze-8days-weather-container , .gottmadingen-8days-weather-container ,.sandanski-8days-weather-container{
+.weather-h2 {
+    position: relative;
+    font-size: 1.8em;
+    top: -0.1em;
+    visibility: hidden;
+}
+
+.eight-days-weather-container {
     border: 2px solid var(--border-color-2);
     padding: 0.1em 1em 0.1em 1em;
     border-radius: 10px;
 }
 
-[class*="-8days-weather-container-inner"] {
+.eight-days-weather-container-inner {
     width: 100%;
     display: flex;
     gap: 2em;
@@ -434,23 +472,23 @@ nav a {
     overflow-x: auto;
 }
 
-[class*="-8days-weather-container-inner"]::-webkit-scrollbar {
+.eight-days-weather-container-inner::-webkit-scrollbar {
     width: 90px;
     height: 7px;
 }
 
-[class*="-8days-weather-container-inner"]::-webkit-scrollbar-track {
+.eight-days-weather-container-inner::-webkit-scrollbar-track {
     background: transparent;
     border-radius: 10px;
     margin: 0 1px;
 }
 
-[class*="-8days-weather-container-inner"]::-webkit-scrollbar-thumb {
+.eight-days-weather-container-inner::-webkit-scrollbar-thumb {
     border-radius: 10px;
     background: var(--scrollbar-color);
 }
 
-[class*="-8days-weather-container-inner"]::-webkit-scrollbar-thumb:hover {
+.eight-days-weather-container-inner::-webkit-scrollbar-thumb:hover {
     background: var(--scrollbar-color-hover);
 }
 
@@ -481,6 +519,11 @@ nav a {
 
 .full-weather-container {
     display: none;
+    position: relative;
+    width: fit-content;
+    opacity: 0.8;
+    /* padding: 0 10%; */
+    z-index: 1;
 }
 
 .full-weather-container:last-child {
@@ -488,25 +531,36 @@ nav a {
 }
 
 .weather-container {
+    position: relative;
+    top: 1.5em;
     display: grid;
-    grid-template-columns: 300px 39em;
+    /* grid-template-columns: 300px 39em; */
+    grid-template-columns: 300px minmax(0, 37em);
     grid-template-rows: auto 1fr;
-    gap: 1.5em 0.8em;
+    gap: 0 0.8em;
 }
 
 .weather-h1 {
+    position: relative;
+    top: 0.4em;
     text-align: center;
     color: var(--text-color);
 }
 
-.weather {
+[id*="weather-container-"] > .weather-h1 {
+    visibility: hidden;
+}
+
+[id*="weather-container-"] > .weather-h1.visible {
+    visibility: visible;
+}
+
+.weather, .weather-1 {
     position: relative;
     grid-row: 2;
     height: 22.3em;
     padding: 0.8em;
-    display: none;
     outline: 4px solid var(--accent-color-2);
-    opacity: 0.8;
     gap: 0.2em;
     grid-template-rows: 63% 37%;
     background: var(--container-color);
@@ -514,12 +568,33 @@ nav a {
     align-items: center;
 }
 
-.add-city-button-block {
-    position: relative;
+.weather {
+    display: none;
+    opacity: 0.8;
+}
+
+.weather-1 {
     display: grid;
+    opacity: 1;
+}
+
+.add-city-button-block, .add-city-button-block-1 {
+    position: relative;
     justify-items: center;
     grid-row: 2;
     top: -1em;
+}
+
+.add-city-button-block {
+    display: grid;
+}
+
+.add-city-button-block-1 {
+    display: none;
+}
+
+.weather-project-2 > .full-weather-container > .add-city-button-block-1 {
+    top: 8em;
 }
 
 .add-city-button-h1 {
@@ -580,19 +655,6 @@ nav a {
 
 .add-city-button:hover .second-cyrcle {
     background-color: var(--add-button-4);
-}
-
-.grid {
-    display: grid;
-}
-
-.hidden {
-    display: none;
-}
-
-.opacity {
-    opacity: 1;
-    outline: 0;
 }
 
 .btn {
@@ -895,12 +957,13 @@ nav a {
     font-weight: 500;
 }
 
-button.right-arrow, button.left-arrow {
+/* -------------BUTTONS---------------- */
+.right-arrow, .left-arrow {
     position: absolute;
     cursor: pointer;
 }
 
-button.right-arrow, button.left-arrow {
+.right-arrow, .left-arrow {
     border: 0;
     outline: 0;
     width: 50px;
@@ -908,19 +971,19 @@ button.right-arrow, button.left-arrow {
     border-radius: 0.5em;
 }
 
-button.right-arrow, button.left-arrow {
+.right-arrow, .left-arrow {
     display: flex;
     justify-content: center;
     align-items: center;
     background-color: var(--button-bg-color);
 }
 
-button.right-arrow:hover, button.left-arrow:hover {
+.right-arrow:hover, .left-arrow:hover {
     transition: 0.4s;
     background-color: var(--button-bg-color-hover);
 }
 
-button.right-arrow::after, button.left-arrow::after, button.right-arrow::before, button.left-arrow::before {
+.right-arrow::after, .left-arrow::after, .right-arrow::before, .left-arrow::before {
     --angle: 0deg;
     content: "";
     position: absolute;
@@ -936,20 +999,20 @@ button.right-arrow::after, button.left-arrow::after, button.right-arrow::before,
     animation: 6s spin linear infinite;
 }
 
-button.right-arrow svg, button.left-arrow svg {
+.right-arrow svg, .left-arrow svg {
     fill: rgb(0, 0, 43);
     width: 25px;
     height: 25px;
 }
 
-button.right-arrow {
-    top: 52%;
-    right: -7.5%;
+.right-arrow {
+    top: 51%;
+    right: 7.6%;
 }
 
-button.left-arrow {
-    top: 52%;
-    left: -7.5%;
+.left-arrow {
+    top: 51%;
+    left: 7.6%;
 }
 
 .weather-project {
@@ -1053,6 +1116,15 @@ button.left-arrow {
     color: var(--profile-username-color);
 }
 
+.block-container {
+    width: 70%;
+}
+
+.opacity {
+    opacity: 1;
+    outline: 0;
+}
+
 .hidden {
     display: none;
 }
@@ -1063,6 +1135,10 @@ button.left-arrow {
 
 .grid {
     display: grid;
+}
+
+.visible {
+    visibility: visible;
 }
 
 .flex {
@@ -1079,6 +1155,14 @@ button.left-arrow {
 
 .reverseSlideIn {
     animation: ReverseslideIn 0.8s ease-out;
+}
+
+.slideInNoOpacity {
+    animation: slideInNoOpacity 0.8s ease-out;
+}
+
+.reverseSlideInNoOpacity {
+    animation: reverseSlideInNoOpacity 0.8s ease-out;
 }
 
 .displaySlide {
@@ -1138,17 +1222,14 @@ button.left-arrow {
         font-size: 9px;
         margin-top: -1.8em;
     }
-    .weather-project-2 > .full-weather-container {
-        padding: 0 10%;
-    }
-    .weather-project-2 > .full-weather-container > .weather-container {
+    /* .weather-project-2 > .full-weather-container > .weather-container {
         grid-template-columns: 300px 1fr;
-    }
-    button.right-arrow {
+    } */
+    .right-arrow {
         top: 48%;
         right: 2.5%;
     }
-    button.left-arrow {
+    .left-arrow {
         top: 48%;
         left: 2.5%;
     }
@@ -1182,10 +1263,10 @@ button.left-arrow {
     .weather-project {
         width: 100%;
     }
-    button.right-arrow {
+    .right-arrow {
         right: 1.5%;
     }
-    button.left-arrow {
+    .left-arrow {
         left: 1.5%;
     }
 }
@@ -1250,11 +1331,11 @@ button.left-arrow {
     .weather-project-2 > .full-weather-container > .weather-container > .weather {
         grid-row: 1;
     }
-    button.right-arrow {
+    .right-arrow {
         top: 87%;
         right: 40.5%;
     }
-    button.left-arrow {
+    .left-arrow {
         top: 87%;
         left: 40.5%;
     }
@@ -1267,11 +1348,11 @@ button.left-arrow {
 }
 
 @media (max-width: 690px) {
-    button.right-arrow {
+    .right-arrow {
         top: 87%;
         right: 35.5%;
     }
-    button.left-arrow {
+    .left-arrow {
         top: 87%;
         left: 35.5%;
     }
@@ -1306,15 +1387,15 @@ button.left-arrow {
     .weather-project-2 > .full-weather-container {
         padding: 0;
     }
-    button.right-arrow, button.left-arrow {
+    .right-arrow, .left-arrow {
         width: 40px;
         height: 40px;
     }
-    button.right-arrow {
+    .right-arrow {
         top: 7%;
         right: 61%;
     }
-    button.left-arrow {
+    .left-arrow {
         top: 7%;
         left: 15%;
     }
@@ -1338,19 +1419,19 @@ button.left-arrow {
 }
 
 @media (max-width: 440px) {
-    button.right-arrow {
+    .right-arrow {
         right: 59.5%;
     }
-    button.left-arrow {
+    .left-arrow {
         left: 15%;
     }
 }
 
 @media (max-width: 405px) {
-    button.right-arrow {
+    .right-arrow {
         right: 57%;
     }
-    button.left-arrow {
+    .left-arrow {
         left: 15%;
     }
 }
@@ -1380,19 +1461,19 @@ button.left-arrow {
 }
 
 @media (max-width: 380px) {
-    button.right-arrow {
+    .right-arrow {
         right: 55.5%;
     }
-    button.left-arrow {
+    .left-arrow {
         left: 15.5%;
     }
 }
 
 @media (max-width: 355px) {
-    button.right-arrow {
+    .right-arrow {
         right: 53.1%;
     }
-    button.left-arrow {
+    .left-arrow {
         left: 15.1%;
     }
 }
