@@ -1352,13 +1352,21 @@ function weatherScroll(collection, state, i, dir) {
     curr.classList.remove("slideIn", "slideInB", "reverseSlideIn", "slideInNoOpacity", "reverseSlideInNoOpacity");
     void curr.offsetWidth;
 
+    let activeAnimationClass = "";
+
     if (dir === "right") {
-        curr.classList.contains("opacity") ? curr.classList.add("slideInB") : curr.classList.add("slideInNoOpacity");
+        activeAnimationClass = curr.classList.contains("opacity") ? "slideInB" : "slideInNoOpacity"
     } else {
-        curr.classList.contains("opacity") ? curr.classList.add("reverseSlideIn") : curr.classList.add("reverseSlideInNoOpacity");
+        activeAnimationClass = curr.classList.contains("opacity") ? "reverseSlideIn" : "reverseSlideInNoOpacity"
     }
 
+    curr.classList.add(activeAnimationClass)
     curr.classList.add("displaySlide");
+
+    const removeAnim = () => curr.classList.remove(activeAnimationClass);
+    
+    curr.addEventListener('animationend', removeAnim, { once: true });
+    curr.addEventListener('animationcancel', removeAnim, { once: true });
 }
 
 function initMySlider(rightBtnId, leftBtnId, collections) {
