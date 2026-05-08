@@ -11,7 +11,9 @@ let timeout = null;
 
 // ------ LOGIC HELPERS ------
 const activeHandlers = [];
+let renders = [false, false, false, false]
 let deletions = [false, false, false, false]
+let deletingWeatherBlocks = false;
 let currentBtns;
 let deletedIndex;
 let buttonInputValue;
@@ -249,7 +251,7 @@ function clearCityWeather(id) {
 
     const key = `cityRendered${id}`;
     cityRenders[key] = false;
-    deletions[id] = true;
+    renders[id] = true;
 }
 
 function clearCityHourlyWeather(id) {
@@ -652,21 +654,25 @@ function renderAddButton(data, deleted = false) {
             }
         }
         else {
-        } if(data[i].classList.contains("hidden")) {
-            data[i].classList.add("block-container")
-            weatherContainerH1?.classList.add("hidden");
-            weatherContainerH2?.classList.add("hidden")
-            weatherContainer?.classList.add("hidden");
-            dailyWeatherContainer?.classList.add("hidden")
-            weatherContainerAddButton.classList.add("grid")
-            data[i].classList.remove("hidden")
-            data[i].classList.add("opacity")
-            break;
+            if(data[i].classList.contains("hidden")) {
+                data[i].classList.add("block-container")
+                weatherContainerH1?.classList.add("hidden");
+                weatherContainerH2?.classList.add("hidden")
+                weatherContainer?.classList.add("hidden");
+                dailyWeatherContainer?.classList.add("hidden")
+                weatherContainerAddButton.classList.add("grid")
+                data[i].classList.remove("hidden")
+                data[i].classList.add("opacity")
+                if(deletingWeatherBlocks) {
+                    autoSwitchByElement(data[i])
+                }
+                break;
+            }
         }
     }
 }
 
-function hideAddButton(data) {
+function hideAddButton(data, deletion = false) {
     for(let i = 1; i <= 4; i++) {
         if(data[i].classList.contains("block-container")) {
             data[i].classList.remove("block-container")
@@ -681,7 +687,9 @@ function hideAddButton(data) {
             dailyWeatherContainer?.classList.remove("hidden");
             weatherContainerAddButton.classList.remove("grid")
             data[i].classList.remove("opacity")
-            break;
+            if(deletion) {
+                data[i].classList.add("hidden")
+            }
         }
     }
 }
@@ -713,8 +721,8 @@ async function buttonFetchWeatherNew(id) {
         }
 
         renderCityWeather(id, data, data2, true)
-        fetchDailyWeatherNew(true);
-        fetchHourlyWeatherNew(true);
+        fetchDailyWeatherNew(id, true);
+        fetchHourlyWeatherNew(id, true);
         nameOfTheCityFromButton = data.name;
     }
     catch(err) {
@@ -791,9 +799,9 @@ function findTheWeatherBlock(data, data2) {
     }
 }
 
-function findTheHourlyWeatherBlock(data, data2, icons, button = false) {
+function findTheHourlyWeatherBlock(id, data, data2, icons, button = false) {
     let index;
-    if(!button) {
+    if(id === undefined) {
         for(let i = 1; i <= 4; i++) {
             if(weatherBlocks2[i].classList.contains("block-container")) {
                 index = i-1;
@@ -802,14 +810,9 @@ function findTheHourlyWeatherBlock(data, data2, icons, button = false) {
         }
     }
     else {
-        for(let i = 4; i >= 1; i--) {
-            if(weatherBlocks2[i].classList.contains("opacity")) {
-                index = i-1;
-                break;
-            }
-        }
+        index = id-1;
     }
-    const i = index+1;
+    let i = index+1
     const svgIcons = icons.map((iconName, index1) => {
         const uniqueId = `grad-${index1}-${index+1}`;
         const allIcons = weatherSVGs(uniqueId); 
@@ -837,9 +840,9 @@ function findTheHourlyWeatherBlock(data, data2, icons, button = false) {
     deletedIndex = index;
 }
 
-function findTheDailyWeatherBlock(data, data2, icons, button = false) {
+function findTheDailyWeatherBlock(id, data, data2, icons, button = false) {
     let index;
-    if(!button) {
+    if(id === undefined) {
         for(let i = 1; i <= 4; i++) {
             if(weatherBlocks3[i].classList.contains("block-container")) {
                 index = i-1;
@@ -848,20 +851,15 @@ function findTheDailyWeatherBlock(data, data2, icons, button = false) {
         }
     }
     else {
-        for(let i = 4; i >= 1; i--) {
-            if(weatherBlocks3[i].classList.contains("opacity")) {
-                index = i-1;
-                break;
-            }
-        }
+        index = id-1;
     }
-    const i = index+1;
+    let i = index+1
     const svgIcons = icons.map((iconName, index1) => {
         const uniqueId = `grad-${index1}-${index+5}`;
         const allIcons = weatherSVGs(uniqueId); 
         return allIcons[iconName] || allIcons["cloudy"];
     });
-    cityDailyWeather(index+1, svgIcons, data2)
+    cityDailyWeather(i, svgIcons, data2)
     const weatherContainerH2 = weatherBlocks3[i].querySelector(`.weather-h2`)
     const dailyWeatherContainer = weatherBlocks3[i].querySelector(`.eight-days-weather-container`)
     const weatherContainerAddButton = weatherBlocks3[i].querySelector(`.add-city-button-block-1`)
@@ -1057,7 +1055,7 @@ function findDeletedWeatherBlocks() {
     for(let i = 1; i <= 4; i++) {
         if(cityRenders[`cityRendered${i}`] === false) {
             let index = i-1;
-            deletions[index] = true;
+            renders[index] = true;
             deletedIndex = index;
             break;
         }
@@ -1091,7 +1089,7 @@ async function fetchWeatherNew() {
     }
 }
 
-async function fetchHourlyWeatherNew(button = false) {
+async function fetchHourlyWeatherNew(id, button = false) {
     try {
         const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${cityInfo.name}&count=1&format=json`);
         const data = await res.json();
@@ -1100,14 +1098,14 @@ async function fetchHourlyWeatherNew(button = false) {
 
         const icons = await fetchWeatherIcons(cityInfo.lat, cityInfo.long)
 
-        findTheHourlyWeatherBlock(data, data2, icons, button)
+        findTheHourlyWeatherBlock(id, data, data2, icons, button)
 
     } catch(err) {
         console.log(`error ${err}`)
     }
 }
 
-async function fetchDailyWeatherNew(button = false) {
+async function fetchDailyWeatherNew(id, button = false) {
     try {
         const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${cityInfo.name}&count=1&format=json`);
         const data = await res.json();
@@ -1116,7 +1114,7 @@ async function fetchDailyWeatherNew(button = false) {
 
         const icons = await fetchWeatherIcons(cityInfo.lat, cityInfo.long)
 
-        findTheDailyWeatherBlock(data, data2, icons, button)
+        findTheDailyWeatherBlock(id, data, data2, icons, button)
 
     } catch(err) {
         console.log(`error ${err}`)
@@ -1128,16 +1126,23 @@ function addRemoveCity(e) {
     const number = e?.currentTarget?.dataset?.number;
     let btns = document.querySelectorAll(`.btn-${number}`);
     if (!Cities.includes(cityName) && Cities.length < 4) {
-        deletions.includes(true) ? Cities.splice(deletedIndex, 0, cityInfo.name) : Cities.push(cityInfo.name);
+        renders.includes(true) ? Cities.splice(deletedIndex, 0, cityInfo.name) : Cities.push(cityInfo.name);
         currentBtns.forEach(currentBtn => {
             currentBtn.innerHTML = `<svg class="remove-svg" xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="#434343"><path d="M200-446.67v-66.66h560v66.66H200Z"/></svg>`
             currentBtn.closest(".weather")?.classList.add("opacity");
             currentBtn.closest(".full-weather-container")?.classList.add("opacity");
             currentBtn.closest(".eight-days-weather")?.classList.add("opacity");
+            currentBtn.closest(".full-weather-container")?.classList.remove("deleted");
+            currentBtn.closest(".eight-days-weather")?.classList.remove("deleted");
         })
+        deletingWeatherBlocks = false;
+        deletions[number-1] = false;
         addingBlockFromButton = false;
         findingTheWeatherBlock = false;
         getIndexForButtons();
+        if(!deletions.includes(true)) {
+            getNamesForButtons();
+        }
         saveCities();
     }
     else if(Cities.includes(cityName)) {
@@ -1149,11 +1154,15 @@ function addRemoveCity(e) {
                 btn.closest(".weather")?.classList.remove("grid")
                 btn.closest(".weather")?.classList.remove("opacity")
                 btn.closest(".full-weather-container")?.classList.add("hidden")
+                btn.closest(".full-weather-container")?.classList.add("deleted")
                 btn.closest(".eight-days-weather")?.classList.add("hidden")
-                hideAddButton(weatherBlocks2);
-                hideAddButton(weatherBlocks3);
+                btn.closest(".eight-days-weather")?.classList.add("deleted")
+                hideAddButton(weatherBlocks2, true);
+                hideAddButton(weatherBlocks3, true);
                 btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="#434343"><path d="M446.67-446.67H200v-66.66h246.67V-760h66.66v246.67H760v66.66H513.33V-200h-66.66v-246.67Z"/></svg>`
             })
+            deletingWeatherBlocks = true;
+            deletions[number-1] = true;
             clearCityWeather(number);
             clearCityHourlyWeather(number);
             clearCityDailyWeather(number)
@@ -1293,8 +1302,16 @@ function getIndexForButtons() {
     Cities.forEach((city, index) => {
         const currentBtns = document.querySelectorAll(`.btn-${index+1}`)
         currentBtns.forEach(currentBtn => {
-            currentBtn.dataset.cityName = city;
             currentBtn.dataset.number = index+1;
+        })
+    })
+}
+
+function getNamesForButtons() {
+    Cities.forEach((city, index) => {
+        const currentBtns = document.querySelectorAll(`.btn-${index+1}`)
+        currentBtns.forEach(currentBtn => {
+            currentBtn.dataset.cityName = city;
         })
     })
 }
@@ -1327,72 +1344,118 @@ async function fetchDailyWatherKharkiv() {
     }
 }
 
-// ----------- SLIDER -------------
 function getCurrentIndex(collection) {
-    return collection.findIndex(slide => slide.classList.contains("displaySlide")) || 0;
+    const index = collection.findIndex(slide => slide.classList.contains("displaySlide"));
+    return index !== -1 ? index : 0;
+}
+
+function switchSlide(collection, state, i, targetIndex, dir, withAnim = true) {
+    if (!collection || collection.length === 0) return;
+
+    const currentIndex = getCurrentIndex(collection);
+    const oldSlide = collection[currentIndex];
+    
+    oldSlide.classList.remove("displaySlide", "slideIn", "slideInB", "reverseSlideIn", "slideInNoOpacity", "reverseSlideInNoOpacity");
+
+    state[i] = targetIndex;
+    const curr = collection[state[i]];
+
+    curr.classList.remove("slideIn", "slideInB", "reverseSlideIn", "slideInNoOpacity", "reverseSlideInNoOpacity");
+
+    if (withAnim) {
+        void curr.offsetWidth;
+
+        let activeAnimationClass = "";
+        if (dir === "right") {
+            activeAnimationClass = curr.classList.contains("opacity") ? "slideInB" : "slideInNoOpacity";
+        } else {
+            activeAnimationClass = curr.classList.contains("opacity") ? "reverseSlideIn" : "reverseSlideInNoOpacity";
+        }
+
+        curr.classList.add(activeAnimationClass);
+        const removeAnim = () => curr.classList.remove(activeAnimationClass);
+        curr.addEventListener('animationend', removeAnim, { once: true });
+        curr.addEventListener('animationcancel', removeAnim, { once: true });
+    }
+
+    curr.classList.add("displaySlide");
 }
 
 function weatherScroll(collection, state, i, dir) {
     if (collection.length === 0) return;
 
-    state[i] = getCurrentIndex(collection);
-
-    collection[state[i]].classList.remove("displaySlide");
+    let nextIdx = state[i];
 
     do {
-        state[i] =
-            dir === "right"
-                ? (state[i] + 1) % collection.length
-                : (state[i] - 1 + collection.length) % collection.length;
-    } while (collection[state[i]].classList.contains("hidden"))
+        nextIdx = (dir === "right")
+            ? (nextIdx + 1) % collection.length
+            : (nextIdx - 1 + collection.length) % collection.length;
+    } while (collection[nextIdx].classList.contains("hidden"));
 
-    const curr = collection[state[i]];
-
-    curr.classList.remove("slideIn", "slideInB", "reverseSlideIn", "slideInNoOpacity", "reverseSlideInNoOpacity");
-    void curr.offsetWidth;
-
-    let activeAnimationClass = "";
-
-    if (dir === "right") {
-        activeAnimationClass = curr.classList.contains("opacity") ? "slideInB" : "slideInNoOpacity"
-    } else {
-        activeAnimationClass = curr.classList.contains("opacity") ? "reverseSlideIn" : "reverseSlideInNoOpacity"
-    }
-
-    curr.classList.add(activeAnimationClass)
-    curr.classList.add("displaySlide");
-
-    const removeAnim = () => curr.classList.remove(activeAnimationClass);
-    
-    curr.addEventListener('animationend', removeAnim, { once: true });
-    curr.addEventListener('animationcancel', removeAnim, { once: true });
+    switchSlide(collection, state, i, nextIdx, dir, true);
 }
+
+const allSliders = [];
 
 function initMySlider(rightBtnId, leftBtnId, collections) {
     const state = new Array(collections.length).fill(0);
+    const r_buttons = document.getElementById(rightBtnId);
+    const l_buttons = document.getElementById(leftBtnId);
 
-    const r_buttons1 = document.getElementById(rightBtnId);
-    const l_buttons1 = document.getElementById(leftBtnId);
-
-    collections.forEach((col) => {
-        if (col.length > 0) col[0].classList.add("displaySlide");
+    collections.forEach((col, i) => {
+        if (col.length > 0) {
+            col[0].classList.add("displaySlide");
+            state[i] = 0; 
+        }
     });
 
-    r_buttons1?.addEventListener("click", () => {
+    r_buttons?.addEventListener("click", () => {
         collections.forEach((col, i) => weatherScroll(col, state, i, "right"));
     });
     
-    l_buttons1?.addEventListener("click", () => {
+    l_buttons?.addEventListener("click", () => {
         collections.forEach((col, i) => weatherScroll(col, state, i, "left"));
     });
+
+    const sliderInstance = {
+        collections: collections,
+        state: state,
+        switchTo: function(targetElement) {
+            let targetIndex = -1;
+
+            for (let j = 0; j < this.collections.length; j++) {
+                targetIndex = this.collections[j].findIndex(slide => slide === targetElement);
+                if (targetIndex !== -1) {
+                    break;
+                }
+            }
+
+            if (targetIndex !== -1) {
+                this.collections.forEach((col, i) => {
+                    switchSlide(col, this.state, i, targetIndex, "right", false);
+                });
+                return true;
+            }
+            return false;
+        }
+    };
+
+    allSliders.push(sliderInstance);
+    return sliderInstance;
 }
 
-// ----------- SLIDER FOR 1-7 DAYS MODE -------------
+function autoSwitchByElement(targetElement) {
+    if (!targetElement) return;
+    for (const slider of allSliders) {
+        if (slider.switchTo(targetElement)) break;
+    }
+}
 
 
 document.addEventListener("DOMContentLoaded", ()=> {
     loadCities();
     getIndexForButtons();
+    getNamesForButtons();
     renderCitiesWeather();
     renderHourlyCitiesWeather();
     renderDailyCitiesWeather();
