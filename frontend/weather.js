@@ -141,6 +141,7 @@ function renderCityWeather(id, data, data2, isButton = false) {
         "fog": "overcast_clouds.jpg",
         "haze": "overcast_clouds.jpg",
         "light rain": "light_rain.jpg",
+        "light intensity shower rain": "light_rain.jpg",
         "moderate rain": "light_rain.jpg",
         "heavy intensity rain": "light_rain.jpg",
         "very heavy rain": "light_rain.jpg",
