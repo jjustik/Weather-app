@@ -795,6 +795,7 @@ nav a {
 }
 
 .about-rn {
+    white-space: pre-line;
     font-size: 15px;
     font-weight: 500;
 }

@@ -117,6 +117,17 @@ function renderCityWeather(id, data, data2, isButton = false) {
     }
     weatherInfo.tempRn.forEach((el)=> el.textContent = Math.round(data.main.temp)+"°")
     weatherInfo.aboutRn.forEach((el)=> el.textContent = data.weather[0].description.replace(/\b\w/g, c => c.toUpperCase()))
+    weatherInfo.aboutRn.forEach(el => {
+        const text = el.textContent.trim();
+        const words = text.split(/\s+/);
+
+        if (words.length > 2) {
+            const firstPart = words.slice(0, 2).join(' ');
+            const secondPart = words.slice(2).join(' ');
+        
+            el.textContent = `${firstPart}\n${secondPart}`;
+        }
+    });
     weatherInfo.aboutFeels.forEach((el)=> el.textContent = "feels like "+Math.round(data.main.feels_like)+"°")
     weatherInfo.wind.forEach((el)=> {
         const speed = Math.round(data.wind.speed);
