@@ -107,16 +107,3 @@ async def upload_avatar(
     return {
         "avatar_url": current_user.avatar_url,
     }
-
-@app.middleware("http")
-async def add_process_time_header(request: Request, call_next):
-    start_time = time.time()
-    response = await call_next(request)
-    process_time = time.time() - start_time
-    response.headers["X-Process-Time"] = str(process_time)
-    return response
-
-@app.get("/slow")
-async def slow_endpoint():
-    time.sleep(2)
-    return {"message": "This endpoint simulates a slow response"}
