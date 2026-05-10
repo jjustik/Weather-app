@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from contextlib import asynccontextmanager
 from typing import Annotated
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.db import create_db_and_tables, get_async_session
 from app.auth import authenticate_user, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES, hash_password, get_current_user
@@ -29,6 +30,14 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 app.mount("/media", StaticFiles(directory=str(MEDIA_DIR)), name="media")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://127.0.0.1:5500"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.post("/registration")
 async def register_user(user: UserCreate, session: Annotated[AsyncSession, Depends(get_async_session)]):
