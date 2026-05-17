@@ -10,6 +10,7 @@ from sqlalchemy import select
 from fastapi import Depends, HTTPException, status
 from pwdlib import PasswordHash
 from dotenv import load_dotenv
+from email_validator import validate_email, EmailNotValidError
 
 from app.models import User as UserModel
 from app.schemas import UserCreate, User
@@ -83,3 +84,10 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)],
         raise credentials_exception
 
     return user
+
+def is_email(value: str) -> bool:
+    try:
+        validate_email(value)
+        return True
+    except EmailNotValidError:
+        return False
