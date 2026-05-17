@@ -2,8 +2,7 @@ from uuid import UUID
 from pydantic import EmailStr, BaseModel
 
 class User(BaseModel):
-    name: str
-    email: EmailStr
+    login: str
 
 class UserCreate(User):
     password: str

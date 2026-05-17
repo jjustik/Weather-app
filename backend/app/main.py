@@ -12,7 +12,7 @@ from typing import Annotated
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.db import create_db_and_tables, get_async_session
-from app.auth import authenticate_user, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES, hash_password, get_current_user
+from app.auth import authenticate_user, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES, hash_password, get_current_user, is_email
 from app.models import User as UserModel
 from app.schemas import UserCreate, User, Token
 
@@ -40,11 +40,44 @@ app.add_middleware(
 )
 
 @app.post("/registration")
-async def register_user(user: UserCreate, session: Annotated[AsyncSession, Depends(get_async_session)]):
-    new_user = UserModel(name=user.name, email=user.email, password_hash=hash_password(user.password))
+async def register_user(
+    user: UserCreate,
+    session: Annotated[AsyncSession, Depends(get_async_session)]
+):
+    login_value = user.login.strip().lower()
+
+    existing_user_query = select(UserModel).where(
+        (UserModel.email == login_value) | (UserModel.name == login_value)
+    )
+
+    existing_user_result = await session.execute(existing_user_query)
+    existing_user = existing_user_result.scalar_one_or_none()
+
+    if existing_user:
+        raise HTTPException(
+            status_code=400,
+            detail="User with this email or nickname already exists"
+        )
+
+    if is_email(login_value):
+        new_user = UserModel(
+            email=login_value,
+            name=None,
+            password_hash=hash_password(user.password),
+            avatar_url=DEFAULT_AVATAR_URL,
+        )
+    else:
+        new_user = UserModel(
+            email=None,
+            name=login_value,
+            password_hash=hash_password(user.password),
+            avatar_url=DEFAULT_AVATAR_URL,
+        )
+
     session.add(new_user)
     await session.commit()
     await session.refresh(new_user)
+
     return {
         "id": new_user.id,
         "name": new_user.name,
