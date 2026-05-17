@@ -232,7 +232,7 @@ body {
     display: grid;
     grid-template-rows: auto 1fr auto;
     align-items: center;
-    background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url("images/login-background.jpg") center / cover no-repeat fixed;
+    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url("images/login-background.jpg") center / cover no-repeat fixed;
 }
 
 main {
