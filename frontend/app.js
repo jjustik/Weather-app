@@ -6,6 +6,7 @@ const avatarInput = document.getElementById("avatarInput");
 const avatarImg = document.querySelector(".profile-img")
 const avatarDeleteBtn = document.querySelector(".custom-avatar-remover")
 const usernameInput = document.querySelector(".profile-username-input");
+const saveBtn = document.querySelector(".save-btn")
 let username;
 let editingUsername = false;
 let shortInput = false;
@@ -156,12 +157,8 @@ function createEventListenerForUsernameInput() {
     const errorMessage = document.querySelector(".error-message")
     usernameInput?.addEventListener("input", ()=> {
         if(usernameInput.value.length === 0) {
-            document.documentElement.style.setProperty("--start-input-width", `9em`)
             usernameInput.classList.remove("input-animation")
-            usernameInput.classList.add("reverse-input-animation-long-ver")
             setTimeout(() => {
-                document.documentElement.style.setProperty("--final-input-width", `9em`)
-                usernameInput.classList.remove("reverse-input-animation-long-ver")
                 void usernameInput.offsetWidth;
                 usernameInput.classList.add("input-animation")
             }, 1980);
@@ -260,7 +257,7 @@ document.addEventListener("DOMContentLoaded", ()=> {
     })
     document.addEventListener("click", (e)=> {
         const usernameInput = document.querySelector(".profile-username-input");
-        if(editingUsername === true && !form.contains(e.target) && usernameInput.value.length > 0) {
+        if(editingUsername === true && !form.contains(e.target) && usernameInput.value.length > 0 && e.key !== "Enter" && e.target !== saveBtn) {
             const usernameInput = document.querySelector(".profile-username-input");
             const allowedUsernameWidth = usernameInput.value.length < 14;
             if(allowedUsernameWidth) {
