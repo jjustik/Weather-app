@@ -7,6 +7,8 @@ const avatarImg = document.querySelector(".profile-img")
 const avatarDeleteBtn = document.querySelector(".custom-avatar-remover")
 const usernameInput = document.querySelector(".profile-username-input");
 const saveBtn = document.querySelector(".save-btn")
+const signupButton = document.querySelector("#signupButton")
+const signinButton = document.querySelector("#signinButton")
 let username;
 let editingUsername = false;
 let shortInput = false;
@@ -196,6 +198,16 @@ function submitProfileChanges(e, animation = false, save = true) {
     }
 }
 
+function authModeChange(mode, button) {
+    button.closest(".auth-wrapper").classList.remove("flex");
+    button.closest(".auth-box").classList.add("auth-animation")
+    if(mode === "login") {
+        document.querySelector("#login-wrapper").classList.add("flex")
+    } else {
+        document.querySelector("#signup-wrapper").classList.add("flex")
+    }
+}
+
 document.addEventListener("DOMContentLoaded", ()=> {
     loadTheme();
     getMode();
@@ -206,6 +218,13 @@ document.addEventListener("DOMContentLoaded", ()=> {
     document.getElementById("easy-mode-button")?.addEventListener("click", changeModeToEasy);
     document.getElementById("advanced-mode-button")?.addEventListener("click", changeModeToAdvanced);
     document.getElementById("days-mode-button")?.addEventListener("click", changeModeToDays);
+
+    signupButton?.addEventListener("click", function() {
+        authModeChange("signup", this)
+    })
+    signinButton?.addEventListener("click", function() {
+        authModeChange("login", this)
+    })
 
     if(usernameInput) {
         if(usernameInput?.value.length < 14) {
