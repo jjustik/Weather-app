@@ -216,3 +216,6 @@ __marimo__/
 
 # Media files
 backend/media/avatars/
+
+# Meta data MacOS
+.DS_Store

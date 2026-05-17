@@ -2,8 +2,13 @@ const currentThemeSvg = document.getElementById("currentTheme");
 const weatherProject = document.querySelector(".weather-project");
 const weatherProject2 = document.querySelector(".weather-project-2");
 const weatherProject3 = document.querySelector(".weather-project-3");
+const avatarInput = document.getElementById("avatarInput");
+const avatarImg = document.querySelector(".profile-img")
+const avatarDeleteBtn = document.querySelector(".custom-avatar-remover")
+const usernameInput = document.querySelector(".profile-username-input");
 let username;
-let usernameInput;
+let editingUsername = false;
+let shortInput = false;
 const form = document.getElementById("profileForm");
 
 function changeModeToDays() {
@@ -111,42 +116,106 @@ function getUsername() {
     }
 }
 
+function setWidthForUsernameInput(flag = false) {
+    let username = localStorage.getItem("username") || "";
+    let usernameInputWidth = username.length * 16;
+    document.documentElement.style.setProperty("--start-input-width", `${usernameInputWidth}px`)
+    if(usernameInputWidth < 209) {
+        document.documentElement.style.setProperty("--final-input-width", `9em`)
+        if(flag) {
+            shortInput = true;
+        }
+    }
+    else {
+        document.documentElement.style.setProperty("--final-input-width", `${usernameInputWidth + 80}px`)
+        if(flag) {
+            shortInput = false;
+        }
+    }
+}
+
 function createUsernameInput() {
-    username = localStorage.getItem("username");
-    form.innerHTML = `<input class="profile-username-input" placeholder="Type your username here" type="text">`
-    usernameInput = document.querySelector(".profile-username-input");
+    username = localStorage.getItem("username") || 0;
+    form.innerHTML = `<input class="profile-username-input" placeholder="Type your username here" type="text">
+                        <span class="error-message">The username is too long</span>`
+    const usernameInput = document.querySelector(".profile-username-input");
+    usernameInput.classList.add("input-animation");
+    setWidthForUsernameInput(true);
     usernameInput.value = username;
     usernameInput.focus();
     username = "";
+    addErrorMessageListener();
+    setTimeout(() => {
+        createEventListenerForUsernameInput();
+    }, 1000);
+    editingUsername = true;
 }
 
-const scrollContainers = document.querySelectorAll('[class*="-8days-weather-container-inner"]');
-
-let isSyncing = false;
-
-const sync = (e) => {
-    if (isSyncing) return;
-    
-    isSyncing = true;
-    const source = e.currentTarget;
-
-    scrollContainers.forEach((target) => {
-        if (target !== source) {
-            // Используем Full Tab (4 пробела) для вложенности
-            target.scrollLeft = source.scrollLeft;
-            target.scrollTop = source.scrollTop;
+function createEventListenerForUsernameInput() {
+    const usernameInput = document.querySelector(".profile-username-input")
+    const errorMessage = document.querySelector(".error-message")
+    usernameInput?.addEventListener("input", ()=> {
+        if(usernameInput.value.length === 0) {
+            document.documentElement.style.setProperty("--start-input-width", `9em`)
+            usernameInput.classList.remove("input-animation")
+            usernameInput.classList.add("reverse-input-animation-long-ver")
+            setTimeout(() => {
+                document.documentElement.style.setProperty("--final-input-width", `9em`)
+                usernameInput.classList.remove("reverse-input-animation-long-ver")
+                void usernameInput.offsetWidth;
+                usernameInput.classList.add("input-animation")
+            }, 1980);
+            shortInput = true;
         }
-    });
+    })
+}
 
-    // Сбрасываем флаг в конце очереди событий
-    setTimeout(() => {
-        isSyncing = false;
-    }, 0);
-};
+function addErrorMessageListener() {
+    const usernameInput = document.querySelector(".profile-username-input")
+    const errorMessage = document.querySelector(".error-message")
+    const maxLength = 13;
+    usernameInput?.addEventListener("input", ()=> {
+        if(usernameInput.value.length > maxLength) {
+            errorMessage.classList.add("block")
+        } else {
+            errorMessage.classList.remove("block")
+        }
+    })
 
-scrollContainers.forEach((container) => {
-    container.addEventListener('scroll', sync, { passive: true });
-});
+}
+
+function submitProfileChanges(e, animation = false, save = true) {
+    const usernameInput = document.querySelector(".profile-username-input");
+    if(!usernameInput) {
+        return;
+    }
+    
+    if(save) {
+        username = usernameInput.value.trim();
+    }
+    else {
+        username = localStorage.getItem("username");
+    }
+    localStorage.setItem("username", username)
+    const hasValue = usernameInput.value.length > 0;
+    if(hasValue) {
+        setWidthForUsernameInput();
+        usernameInput.classList.remove("input-animation")
+        usernameInput.classList.add("reverse-input-animation", "hide-caret")
+    }
+    const finishSubmit = () => {
+        if(hasValue) {
+            form.innerHTML = `<h2 class="profile-username">${username}</h2>`
+        }
+        editingUsername = false;
+    }
+    if(animation) {
+        setTimeout(finishSubmit, 250)
+    }
+    else {
+        finishSubmit();
+    }
+}
 
 document.addEventListener("DOMContentLoaded", ()=> {
     loadTheme();
@@ -159,23 +228,50 @@ document.addEventListener("DOMContentLoaded", ()=> {
     document.getElementById("advanced-mode-button")?.addEventListener("click", changeModeToAdvanced);
     document.getElementById("days-mode-button")?.addEventListener("click", changeModeToDays);
 
+    if(usernameInput) {
+        if(usernameInput?.value.length < 14) {
+            shortInput = true;
+        }
+        addErrorMessageListener();
+    }
 
     form?.addEventListener("submit", (e)=> {
-    usernameInput = document.querySelector(".profile-username-input");
-    if(usernameInput) {
         e.preventDefault();
-        username = usernameInput.value.trim();
-        localStorage.setItem("username", username)
-        if(usernameInput.value.length > 0) {
-            form.innerHTML = `<h2 class="profile-username">${username}</h2>`
+        const usernameInput = document.querySelector(".profile-username-input");
+        const allowedUsernameWidth = usernameInput?.value.length < 14;
+        if(allowedUsernameWidth) {
+            if(usernameInput?.value.length > 13 && shortInput) {
+                submitProfileChanges(e)
+            }
+            else {
+                submitProfileChanges(e, true)
+            }
         }
-    }
-    else {
-        createUsernameInput();
-    }
     })
     form?.addEventListener("click", (e)=> {
-        createUsernameInput();
+        if(editingUsername === false) {
+            const usernameInput = document.querySelector(".profile-username-input");
+            if(!usernameInput) {
+                createUsernameInput();
+                editingUsername = true;
+                e.stopPropagation();
+            }
+        }
+    })
+    document.addEventListener("click", (e)=> {
+        const usernameInput = document.querySelector(".profile-username-input");
+        if(editingUsername === true && !form.contains(e.target) && usernameInput.value.length > 0) {
+            const usernameInput = document.querySelector(".profile-username-input");
+            const allowedUsernameWidth = usernameInput.value.length < 14;
+            if(allowedUsernameWidth) {
+                if(usernameInput.value.length > 13 && shortInput) {
+                    submitProfileChanges(e, false, false)
+                }
+                else {
+                    submitProfileChanges(e, true, false)
+                }
+            }
+        }
     })
     document.addEventListener("click", (e)=> {
         const clickOnSelector = document.querySelector(".custom-selector").contains(e.target);
@@ -196,4 +292,33 @@ document.addEventListener("DOMContentLoaded", ()=> {
     document.addEventListener("click", (e) => {
         changeThemeSvg(e);
     });
+    avatarInput?.addEventListener("change", (e)=> {
+        const avatarFile = e.target.files[0]
+        const MAX_SIZE_MB = 20;
+        const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
+        if (!avatarFile) return;
+
+        const allowedTypes = ["image/jpeg", "image/png"]
+
+        if(!allowedTypes.includes(avatarFile.type)) {
+            avatarInput.value = '';
+            return;
+        }
+
+        if(avatarFile && avatarFile.size > MAX_SIZE_BYTES) {
+            avatarInput.value = "";
+            return;
+        }
+
+        const url = URL.createObjectURL(avatarFile)
+        avatarImg.src = url;
+        
+        avatarDeleteBtn.addEventListener("click", ()=> {
+            URL.revokeObjectURL(url);
+            avatarInput.value = "";
+            avatarImg.src = "images/FaceCat.jpg";
+        })
+
+        avatarImg.onload = () => URL.revokeObjectURL(url)
+    })
 })
