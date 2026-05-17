@@ -146,25 +146,7 @@ function createUsernameInput() {
     usernameInput.focus();
     username = "";
     addErrorMessageListener();
-    setTimeout(() => {
-        createEventListenerForUsernameInput();
-    }, 1000);
     editingUsername = true;
-}
-
-function createEventListenerForUsernameInput() {
-    const usernameInput = document.querySelector(".profile-username-input")
-    const errorMessage = document.querySelector(".error-message")
-    usernameInput?.addEventListener("input", ()=> {
-        if(usernameInput.value.length === 0) {
-            usernameInput.classList.remove("input-animation")
-            setTimeout(() => {
-                void usernameInput.offsetWidth;
-                usernameInput.classList.add("input-animation")
-            }, 1980);
-            shortInput = true;
-        }
-    })
 }
 
 function addErrorMessageListener() {
