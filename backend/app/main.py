@@ -78,11 +78,17 @@ async def register_user(
     await session.commit()
     await session.refresh(new_user)
 
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(data={"sub": str(new_user.id)}, expires_delta=access_token_expires)
     return {
-        "id": new_user.id,
-        "name": new_user.name,
-        "email": new_user.email,
-        "avatar_url": new_user.avatar_url or DEFAULT_AVATAR_URL,
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": {
+            "id": new_user.id,
+            "name": new_user.name,
+            "email": new_user.email,
+            "avatar_url": new_user.avatar_url or DEFAULT_AVATAR_URL,
+        }
     }
 
 
