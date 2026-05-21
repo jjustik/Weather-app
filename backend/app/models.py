@@ -1,6 +1,6 @@
 import uuid
 from app.db import Base
-from sqlalchemy import Column, Integer, String, ForeignKey, Uuid
+from sqlalchemy import Column, Integer, String, ForeignKey, Uuid, JSON
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 class User(Base):
@@ -11,6 +11,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=True)
     password_hash: Mapped[str] = mapped_column(String, nullable=False)
     avatar_url: Mapped[str | None] = mapped_column(nullable=True)
+    cities: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
 
     def __repr__(self):
         return f"User(id={self.id}, email={self.email})"

@@ -3,6 +3,7 @@ import os
 from typing import Annotated
 from uuid import UUID
 from datetime import datetime, timedelta, timezone
+import uuid as uuid_module
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jwt.exceptions import InvalidTokenError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -68,16 +69,18 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)],
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email = payload.get("sub")
+        user_id_str = payload.get("sub")
 
-        if email is None:
+        if user_id_str is None:
             raise credentials_exception
+        
+        user_id = uuid_module.UUID(user_id_str)
 
-    except InvalidTokenError:
+    except (InvalidTokenError, ValueError):
         raise credentials_exception
 
     result = await session.execute(
-        select(UserModel).where(UserModel.email == email)
+        select(UserModel).where(UserModel.id == user_id)
     )
     user = result.scalar_one_or_none()
     if user is None:

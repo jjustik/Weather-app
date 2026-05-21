@@ -6,7 +6,7 @@ from uuid import uuid4
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, update
 from contextlib import asynccontextmanager
 from typing import Annotated
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.db import create_db_and_tables, get_async_session
 from app.auth import authenticate_user, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES, hash_password, get_current_user, is_email
 from app.models import User as UserModel
-from app.schemas import UserCreate, User, Token
+from app.schemas import UserCreate, User, Token, CityUpdate
 
 MEDIA_DIR = Path("media")
 AVATARS_DIR = MEDIA_DIR / "avatars"
@@ -94,7 +94,7 @@ async def login_user(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
                             detail="Incorrect email or password",
                             headers={"WWW-Authenticate": "Bearer"},)
     access_token = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(data={"sub": str(user.email)}, expires_delta=access_token)
+    access_token = create_access_token(data={"sub": str(user.id)}, expires_delta=access_token)
     return Token(access_token=access_token, token_type="bearer")
 
 @app.get("/users/me")
@@ -104,6 +104,7 @@ async def read_me(current_user: Annotated[UserModel, Depends(get_current_user)])
         "name": current_user.name,
         "email": current_user.email,
         "avatar_url": current_user.avatar_url or DEFAULT_AVATAR_URL,
+        "cities": current_user.cities or [],
     }
 
 @app.post("/users/me/avatar")
@@ -148,4 +149,23 @@ async def upload_avatar(
 
     return {
         "avatar_url": current_user.avatar_url,
+    }
+
+
+@app.post("/users/me/city")
+async def update_city(
+    data: CityUpdate,
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_async_session)]
+):
+    await session.execute(
+        update(UserModel)
+        .where(UserModel.id == current_user.id)
+        .values(cities=data.cities)
+    )
+
+    await session.commit()
+
+    return {
+        "cities": data.cities
     }
