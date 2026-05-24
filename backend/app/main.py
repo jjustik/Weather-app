@@ -1,5 +1,5 @@
 import time
-from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Request
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Request, Response
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from uuid import uuid4
@@ -41,6 +41,7 @@ app.add_middleware(
 
 @app.post("/registration")
 async def register_user(
+    response: Response,
     user: UserCreate,
     session: Annotated[AsyncSession, Depends(get_async_session)]
 ):
@@ -80,9 +81,16 @@ async def register_user(
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(data={"sub": str(new_user.id)}, expires_delta=access_token_expires)
+
+    response.set_cookie(
+    key="access_token",
+    value=access_token,
+    httponly=True,
+    secure=False,
+    samesite="lax",
+    max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60)
+
     return {
-        "access_token": access_token,
-        "token_type": "bearer",
         "user": {
             "id": new_user.id,
             "name": new_user.name,
@@ -92,8 +100,11 @@ async def register_user(
     }
 
 
-@app.post("/token")
-async def login_user(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], session: Annotated[AsyncSession, Depends(get_async_session)]):
+@app.post("/login")
+async def login_user(
+    response: Response,
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()], 
+    session: Annotated[AsyncSession, Depends(get_async_session)],):
     user = await authenticate_user(form_data.username, form_data.password, session)
     if not user:
         raise HTTPException(status_code=401, 
@@ -101,7 +112,16 @@ async def login_user(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
                             headers={"WWW-Authenticate": "Bearer"},)
     access_token = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(data={"sub": str(user.id)}, expires_delta=access_token)
-    return Token(access_token=access_token, token_type="bearer")
+
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=False,   
+        samesite="lax",
+        max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60)
+    
+    return {"Message": "Logged in"}
 
 @app.get("/users/me")
 async def read_me(current_user: Annotated[UserModel, Depends(get_current_user)]):
