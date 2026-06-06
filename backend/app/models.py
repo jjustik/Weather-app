@@ -12,6 +12,7 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(String, nullable=False)
     avatar_url: Mapped[str | None] = mapped_column(nullable=True)
     cities: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
+    add_button: Mapped[bool] = mapped_column(default=True)
 
     def __repr__(self):
         return f"User(id={self.id}, email={self.email})"

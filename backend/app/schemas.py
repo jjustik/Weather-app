@@ -14,3 +14,4 @@ class Token(BaseModel):
 
 class CityUpdate(BaseModel):
     cities: list[str] = Field(default_factory=list)
+

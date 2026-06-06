@@ -131,6 +131,7 @@ async def read_me(current_user: Annotated[UserModel, Depends(get_current_user)])
         "email": current_user.email,
         "avatar_url": current_user.avatar_url or DEFAULT_AVATAR_URL,
         "cities": current_user.cities or [],
+        "add_button": current_user.add_button
     }
 
 @app.post("/users/me/avatar")
@@ -195,3 +196,48 @@ async def update_city(
     return {
         "cities": data.cities
     }
+
+@app.put("/users/me")
+async def update_user(
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_async_session)]):
+
+    if current_user.add_button == False:
+        current_user.add_button = True
+    else:
+        current_user.add_button = False
+    
+    await session.commit()
+    await session.refresh(current_user)
+
+    return {"add_button": current_user.add_button}
+
+@app.put("/users/me/change-nickname")
+async def change_nickname(
+    new_nickname: str,
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_async_session)]):
+
+    new_nickname = new_nickname.strip()
+
+    if not new_nickname:
+        raise HTTPException(
+            status_code=400,
+            detail="Nickname cannot be empty"
+        )
+    
+    existing_user_query = select(UserModel).where(UserModel.name == new_nickname)
+    existing_user_result = await session.execute(existing_user_query)
+    existing_user = existing_user_result.scalar_one_or_none()
+
+    if existing_user:
+        raise HTTPException(
+            status_code=400,
+            detail="User with this nickname already exists"
+        )
+    
+    current_user.name = new_nickname
+    await session.commit()
+    await session.refresh(current_user)
+    return {"name": current_user.name}
+
