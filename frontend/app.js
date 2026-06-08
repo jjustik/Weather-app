@@ -7,12 +7,19 @@ const avatarImg = document.querySelector(".profile-img")
 const avatarDeleteBtn = document.querySelector(".custom-avatar-remover")
 const usernameInput = document.querySelector(".profile-username-input");
 const saveBtn = document.querySelector(".save-btn")
-const signupButton = document.querySelector("#signupButton")
-const signinButton = document.querySelector("#signinButton")
+const signupButtonChangeMode = document.querySelector("#signupButton")
+const signinButtonChangeMode = document.querySelector("#signinButton")
+const signUpUserInput = document.querySelector("#signup-user")
+const signUpPassInput = document.querySelector("#signup-pass")
+const signUpBtn = document.querySelector("#signup-button")
+const signInBtn = document.querySelector("#signin-button")
 let username;
 let editingUsername = false;
 let shortInput = false;
 const form = document.getElementById("profileForm");
+
+//------BACKEND--------
+const BASE_URL = "http://127.0.0.1:8000"
 
 function changeModeToDays() {
     if(weatherProject && weatherProject2) {
@@ -208,6 +215,29 @@ function authModeChange(mode, button) {
     }
 }
 
+function registrationSuccess() {
+    const loginLi = document.querySelector("#login-li")
+    loginLi.classList.add("hidden");
+    window.location.replace("/index.html")
+
+}
+
+// ---------------FRONTEND TO BACKEND---------------------
+async function registration() {
+    try {
+        const response = await fetch(`${BASE_URL}/registration`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ login: signUpUserInput.value.trim(), password: signUpPassInput.value.trim() })
+        });
+        const data = await response.json();
+        console.log(data)
+    }
+    catch(error) {
+
+    }
+}
+
 document.addEventListener("DOMContentLoaded", ()=> {
     loadTheme();
     getMode();
@@ -219,10 +249,10 @@ document.addEventListener("DOMContentLoaded", ()=> {
     document.getElementById("advanced-mode-button")?.addEventListener("click", changeModeToAdvanced);
     document.getElementById("days-mode-button")?.addEventListener("click", changeModeToDays);
 
-    signupButton?.addEventListener("click", function() {
+    signupButtonChangeMode?.addEventListener("click", function() {
         authModeChange("signup", this)
     })
-    signinButton?.addEventListener("click", function() {
+    signinButtonChangeMode?.addEventListener("click", function() {
         authModeChange("login", this)
     })
 
@@ -319,4 +349,5 @@ document.addEventListener("DOMContentLoaded", ()=> {
 
         avatarImg.onload = () => URL.revokeObjectURL(url)
     })
+    signUpBtn.addEventListener("click", registration)
 })

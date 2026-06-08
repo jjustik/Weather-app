@@ -28,6 +28,10 @@ let cityRenders = {
 
 // ------ DOM ELEMENTS ------
 const searchInput = document.querySelector(".search-bar > input")
+const signUpUserInput = document.querySelector("#signup-user")
+const signUpPassInput = document.querySelector("#signup-pass")
+const signUpBtn = document.querySelector("#signup-button")
+const signInBtn = document.querySelector("#signin-button")
 const addCityButtonBlocks = document.querySelectorAll(".add-city-button-block")
 const addCityH1 = document.querySelector(".add-city-button-h1")
 const addCityButton = document.querySelector(".add-city-button")
@@ -53,6 +57,9 @@ const weatherBlocks3 = {
     3: document.getElementById("daily-weather-3"),
     4: document.getElementById("daily-weather-4")
 }
+
+//------BACKEND--------
+const BASE_URL = "http://127.0.0.1:8000"
 
 // ADVANCED SLIDER BUTTON 
 const slides1 = [ Array.from(document.querySelectorAll(".full-weather-container")) ];
@@ -306,214 +313,6 @@ function clearCityDailyWeather(id) {
     }
 }
 
-// ----------------------------- KHAKRIV -----------------------------
-
-async function fetchWeatherKharkiv() {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=49.9808&longitude=36.2527&current_weather=true&hourly=dewpoint_2m,uv_index&timezone=auto`;
-    try {
-        const res = await fetch("/api/get-weather?city=kharkiv");
-        const data = await res.json();
-        const res2 = await fetch(url)
-        const data2 = await res2.json();
-
-        renderCityWeather(1, data, data2)
-    } catch(err) {
-        console.log(`error ${err}`)
-    }
-}
-
-async function fetchHourlyWatherKharkiv() {
-    const url = "https://api.open-meteo.com/v1/forecast?latitude=49.9808&longitude=36.2527&hourly=weathercode,is_day,temperature_2m,precipitation_probability,cloudcover&timezone=auto&forecast_days=1";
-    try {
-        const res = await fetch(url);
-        const data = await res.json();
-        const icons = await fetchWeatherIcons(49.9808, 36.2527)
-        const svgIcons = icons.map((iconName, index) => {
-            const uniqueId = `grad-${index}-1`;
-            const allIcons = weatherSVGs(uniqueId); 
-            return allIcons[iconName] || allIcons["cloudy"];
-        });
-        cityHourlyWeather(1, svgIcons, data)
-    }
-    catch(err) {
-        console.log(`error ${err}`)
-    }
-}
-
-async function fetchDailyWatherKharkiv() {
-    const url = "https://api.open-meteo.com/v1/forecast?latitude=49.9808&longitude=36.2527&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=8";
-    try {
-        const res = await fetch(url);
-        const data = await res.json();
-        const icons = await fetchWeatherIcons(49.9808, 36.2527)
-        const svgIcons = icons.map((iconName, index) => {
-            const uniqueId = `grad-${index}-5`;
-            const allIcons = weatherSVGs(uniqueId); 
-            return allIcons[iconName] || allIcons["cloudy"];
-        });
-        cityDailyWeather(1, svgIcons, data)
-    }
-    catch(err) {
-        console.log(`error ${err}`)
-    }
-}
-
-// ----------------------------- ZABRZE -----------------------------
-
-async function fetchWeatherZabrze() {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=50.3249&longitude=18.7858&current_weather=true&hourly=dewpoint_2m,uv_index&timezone=auto`;
-    try {
-        const res = await fetch("/api/get-weather?city=zabrze");
-        const res2 = await fetch(url)
-        const data = await res.json();
-        const data2 = await res2.json();
-
-        renderCityWeather(2, data, data2)
-    } catch(err) {
-        console.log(`error ${err}`)
-    }
-}
-
-async function fetchHourlyWatherZabrze() {
-    const url = "https://api.open-meteo.com/v1/forecast?latitude=50.3249&longitude=18.7858&hourly=weathercode,is_day,temperature_2m,precipitation_probability,cloudcover&timezone=auto&forecast_days=1";
-    try {
-        const res = await fetch(url);
-        const data = await res.json();
-        const icons = await fetchWeatherIcons(50.3249, 18.7858)
-        const svgIcons = icons.map((iconName, index) => {
-            const uniqueId = `grad-${index}-2`;
-            const allIcons = weatherSVGs(uniqueId); 
-            return allIcons[iconName] || allIcons["cloudy"];
-        });
-        cityHourlyWeather(2, svgIcons, data)
-    }
-    catch(err) {
-        console.log(`error ${err}`)
-    }
-}
-
-async function fetchDailyWatherZabrze() {
-    const url = "https://api.open-meteo.com/v1/forecast?latitude=50.3249&longitude=18.7858&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=8";
-    try {
-        const res = await fetch(url);
-        const data = await res.json();
-        const icons = await fetchWeatherIcons(50.3249, 18.7858)
-        const svgIcons = icons.map((iconName, index) => {
-            const uniqueId = `grad-${index}-6`;
-            const allIcons = weatherSVGs(uniqueId); 
-            return allIcons[iconName] || allIcons["cloudy"];
-        });
-        cityDailyWeather(2, svgIcons, data)
-    }
-    catch(err) {
-        console.log(`error ${err}`)
-    }
-}
-
-// ----------------------------- GOTTMADINGEN -----------------------------
-
-async function fetchWeatherGottmadingen() {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=47.7351&longitude=8.7769&current_weather=true&hourly=dewpoint_2m,uv_index&timezone=auto`;
-    try {
-        const res = await fetch("/api/get-weather?city=gottmadingen");
-        const res2 = await fetch(url);
-        const data = await res.json();
-        const data2 = await res2.json();
-
-        renderCityWeather(3, data, data2)
-    } catch(err) {
-        console.log(`error ${err}`)
-    }
-}
-
-async function fetchHourlyWatherGottmadingen() {
-    const url = "https://api.open-meteo.com/v1/forecast?latitude=47.7351&longitude=8.7769&hourly=temperature_2m,precipitation_probability,cloudcover&timezone=auto&forecast_days=1";
-    try {
-        const res = await fetch(url);
-        const data = await res.json();
-        const icons = await fetchWeatherIcons(47.7351, 8.7769)
-        const svgIcons = icons.map((iconName, index) => {
-            const uniqueId = `grad-${index}-3`;
-            const allIcons = weatherSVGs(uniqueId); 
-            return allIcons[iconName] || allIcons["cloudy"];
-        });
-        cityHourlyWeather(3, svgIcons, data)
-    }
-    catch(err) {
-        console.log(`error ${err}`)
-    }
-}
-
-async function fetchDailyWatherGottmadingen() {
-    const url = "https://api.open-meteo.com/v1/forecast?latitude=47.7351&longitude=8.7769&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=8";
-    try {
-        const res = await fetch(url);
-        const data = await res.json();
-        const icons = await fetchWeatherIcons(47.7351, 8.7769)
-        const svgIcons = icons.map((iconName, index) => {
-            const uniqueId = `grad-${index}-7`;
-            const allIcons = weatherSVGs(uniqueId); 
-            return allIcons[iconName] || allIcons["cloudy"];
-        });
-        cityDailyWeather(3, svgIcons, data)
-    }
-    catch(err) {
-        console.log(`error ${err}`)
-    }
-}
-
-// ----------------------------- SANDANSKI -----------------------------
-
-async function fetchWeatherSandanski() {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=41.5667&longitude=23.2833&current_weather=true&hourly=dewpoint_2m,uv_index&timezone=auto`;
-    try {
-        const res = await fetch("/api/get-weather?city=sandanski");
-        const res2 = await fetch(url)
-        const data = await res.json();
-        const data2 = await res2.json();
-
-        renderCityWeather(4, data, data2)
-    } catch(err) {
-        console.log(`error ${err}`)
-    }
-}
-
-async function fetchHourlyWatherSandanski() {
-    const url = "https://api.open-meteo.com/v1/forecast?latitude=41.5667&longitude=23.2833&hourly=temperature_2m,precipitation_probability,cloudcover&timezone=auto&forecast_days=1";
-    try {
-        const res = await fetch(url);
-        const data = await res.json();
-        const icons = await fetchWeatherIcons(41.5667, 23.2833)
-        const svgIcons = icons.map((iconName, index) => {
-            const uniqueId = `grad-${index}-4`;
-            const allIcons = weatherSVGs(uniqueId); 
-            return allIcons[iconName] || allIcons["cloudy"];
-        });
-        cityHourlyWeather(4, svgIcons, data)
-    }
-    catch(err) {
-        console.log(`error ${err}`)
-    }
-}
-
-async function fetchDailyWatherSandanski() {
-    const url = "https://api.open-meteo.com/v1/forecast?latitude=41.5667&longitude=23.2833&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=8";
-    try {
-        const res = await fetch(url);
-        const data = await res.json();
-        const icons = await fetchWeatherIcons(41.5667, 23.2833)
-        const svgIcons = icons.map((iconName, index) => {
-            const uniqueId = `grad-${index}-8`;
-            const allIcons = weatherSVGs(uniqueId); 
-            return allIcons[iconName] || allIcons["cloudy"];
-        });
-        cityDailyWeather(4, svgIcons, data)
-    }
-    catch(err) {
-        console.log(`error ${err}`)
-    }
-}
-
 function getWindDirection(deg) {
     const directions = [
         "N", "NNE", "NE", "ENE",
@@ -578,6 +377,17 @@ function dayOfTheWeek(data) {
     // Возвращаем Mon, Tue и т.д.
         return date.toLocaleDateString('en-US', { weekday: 'short' });
     });
+}
+
+// ---------------FRONTEND TO BACKEND---------------------
+async function registration() {
+    const response = await fetch(`${BASE_URL}/registration`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: signUpUserInput.value.trim(), password: signUpPassInput.value.trim() })
+    });
+    const data = response.json();
+    console.log(data)
 }
 
 for(let i = 1; i <= 4; i++) {
@@ -1463,7 +1273,6 @@ function autoSwitchByElement(targetElement) {
     }
 }
 
-
 document.addEventListener("DOMContentLoaded", ()=> {
     loadCities();
     getIndexForButtons();
@@ -1479,21 +1288,7 @@ document.addEventListener("DOMContentLoaded", ()=> {
     initMySlider("w-arrow3", "w-arrow4", slides2);
     addEventListenerForAddButton(weatherBlocks2);
     addEventListenerForAddButton(weatherBlocks3);
-    // fetchWeatherKharkiv();
-    // fetchHourlyWatherKharkiv();
-    // fetchDailyWatherKharkiv();
 
-    // fetchWeatherZabrze();
-    // fetchHourlyWatherZabrze();
-    // fetchDailyWatherZabrze();
-
-    // fetchWeatherGottmadingen();
-    // fetchHourlyWatherGottmadingen();
-    // fetchDailyWatherGottmadingen();
-
-    // fetchWeatherSandanski();
-    // fetchHourlyWatherSandanski();
-    // fetchDailyWatherSandanski();
     searchInput.addEventListener("input", ()=> {
         if(searchInput.value.length > 0) {
             clearTimeout(timeout)
