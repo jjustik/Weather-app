@@ -14,15 +14,15 @@ from pwdlib import PasswordHash
 from dotenv import load_dotenv
 from email_validator import validate_email, EmailNotValidError
 
-from app.models import User as UserModel
-from app.schemas import UserCreate, User
+from app.models.models import User as UserModel
+from app.schemas.users import UserCreate, User
 from app.db import get_async_session
 
 
 load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ALGORITHM = os.getenv("ALGORITHM")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 password_hash = PasswordHash.recommended()

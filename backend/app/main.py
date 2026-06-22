@@ -10,11 +10,20 @@ from sqlalchemy import select, update
 from contextlib import asynccontextmanager
 from typing import Annotated
 from fastapi.middleware.cors import CORSMiddleware
+import redis
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
+REDIS_URL = os.getenv("REDIS_URL")
+CACHE_EXPIRE = int(os.getenv("WEATHER_CACHE_EXPIRE"))
+
+from app.redis import redis_client, get_redis
 from app.db import create_db_and_tables, get_async_session
 from app.auth import authenticate_user, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES, hash_password, get_current_user, is_email
-from app.models import User as UserModel
-from app.schemas import UserCreate, User, Token, CityUpdate
+from app.models.models import User as UserModel
+from app.schemas.users import UserCreate, User, Token
+from app.schemas.city import CityUpdate, CacheCities
 
 MEDIA_DIR = Path("media")
 AVATARS_DIR = MEDIA_DIR / "avatars"
@@ -241,3 +250,17 @@ async def change_nickname(
     await session.refresh(current_user)
     return {"name": current_user.name}
 
+
+@app.post("/cache/weather")
+async def cache_weather(data: CacheCities,
+                        current_user: Annotated[UserModel, Depends(get_current_user)],
+                        redis: Annotated[redis.Redis, Depends(get_redis)]):
+    cache_key = f"weather:user:{current_user.id}"
+
+    await redis.hset(name=cache_key, mapping={
+        "weather": data.weather,
+        "hourly_weather": data.hourly_weather,
+        "daily_weather": data.daily_weather
+    })
+    await redis.expire(name=cache_key, time=CACHE_EXPIRE)
+    return {"message": "Weather data cached successfully"}

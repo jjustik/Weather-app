@@ -1,9 +1,11 @@
 from sqlalchemy.orm import DeclarativeBase, relationship
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from typing import AsyncGenerator, Optional
+import os
+from dotenv import load_dotenv
 
-
-DATABASE_URL = "sqlite+aiosqlite:///./test.db"
+load_dotenv()
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 class Base(DeclarativeBase):
     pass
@@ -19,4 +21,4 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session_maker() as session:
         yield session
 
-import app.models
+import app.models.models
