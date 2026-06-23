@@ -264,3 +264,14 @@ async def cache_weather(data: CacheCities,
     })
     await redis.expire(name=cache_key, time=CACHE_EXPIRE)
     return {"message": "Weather data cached successfully"}
+
+@app.get("/cache/weather", response_model=CacheCities) # response_model - shows that the response will be of type CacheCities to the frontend
+async def get_cached_weather(current_user: Annotated[UserModel, Depends(get_current_user)],
+                             redis: Annotated[redis.Redis, Depends(get_redis)]):
+    cache_key = f"weather:user:{current_user.id}"
+    cached_data = await redis.hgetall(cache_key)
+
+    if not cached_data:
+        raise HTTPException(status_code=404, detail="No cached weather data found")
+    
+    return cached_data
