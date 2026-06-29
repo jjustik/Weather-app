@@ -8,3 +8,4 @@ PyJWT==2.12.1
 pwdlib[argon2]==0.3.0
 greenlet==3.5.0
 redis==4.5.4
+asyncpg==0.31.0
