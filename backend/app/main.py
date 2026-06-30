@@ -1,8 +1,9 @@
 import time
-from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Request, Response
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Request, Response, APIRouter, BackgroundTasks, status
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from uuid import uuid4
+import uuid
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,11 +14,13 @@ from fastapi.middleware.cors import CORSMiddleware
 import redis
 from dotenv import load_dotenv
 import os
+from pydantic import BaseModel
 
 load_dotenv()
 REDIS_URL = os.getenv("REDIS_URL")
 CACHE_EXPIRE = int(os.getenv("WEATHER_CACHE_EXPIRE"))
 
+from app.routers import auth
 from app.redis import redis_client, get_redis
 from app.db import create_db_and_tables, get_async_session
 from app.auth import authenticate_user, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES, hash_password, get_current_user, is_email
@@ -275,3 +278,5 @@ async def get_cached_weather(current_user: Annotated[UserModel, Depends(get_curr
         raise HTTPException(status_code=404, detail="No cached weather data found")
     
     return cached_data
+
+app.include_router(auth.router)
