@@ -3,7 +3,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_async_session
-from app.redis import get_redis # Твой Depends для Redis
+from app.redis import get_redis
 from app.models.models import User as UserModel
 from app.auth import hash_password
 from app.schemas.users import ForgotPasswordRequest, ResetPasswordRequest
