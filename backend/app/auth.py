@@ -5,6 +5,7 @@ from uuid import UUID
 from datetime import datetime, timedelta, timezone
 import uuid as uuid_module
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import Cookie
 from jwt.exceptions import InvalidTokenError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -13,15 +14,15 @@ from pwdlib import PasswordHash
 from dotenv import load_dotenv
 from email_validator import validate_email, EmailNotValidError
 
-from app.models import User as UserModel
-from app.schemas import UserCreate, User
+from app.models.user import User as UserModel
+from app.schemas.users import UserCreate, User
 from app.db import get_async_session
 
 
 load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ALGORITHM = os.getenv("ALGORITHM")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 password_hash = PasswordHash.recommended()
@@ -58,31 +59,44 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)],
-    session: Annotated[AsyncSession, Depends(get_async_session)],
-):
+
+async def get_current_user(
+    access_token: Annotated[str | None, Cookie()] = None,
+    session: Annotated[AsyncSession, Depends(get_async_session)] = None
+    ):
+
     credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
+        status_code=401,
+        detail="Could not validate credentials"
     )
 
+    if access_token is None:
+        raise credentials_exception
+
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(
+            access_token,
+            SECRET_KEY,
+            algorithms=[ALGORITHM]
+        )
+
         user_id_str = payload.get("sub")
 
         if user_id_str is None:
             raise credentials_exception
-        
-        user_id = uuid_module.UUID(user_id_str)
+
+        user_id = UUID(user_id_str)
 
     except (InvalidTokenError, ValueError):
         raise credentials_exception
 
     result = await session.execute(
-        select(UserModel).where(UserModel.id == user_id)
+        select(UserModel)
+        .where(UserModel.id == user_id)
     )
+
     user = result.scalar_one_or_none()
+
     if user is None:
         raise credentials_exception
 
