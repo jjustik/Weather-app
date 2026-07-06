@@ -8,64 +8,44 @@ let searchInProcess = false;
 let addingBlockFromButton = false;
 let addingBlockFromSearch = false;
 let timeout = null;
+let addButton = loadAddButtonState();
 
 // ------ LOGIC HELPERS ------
 const activeHandlers = [];
-let renders = [false, false, false, false]
-let deletions = [false, false, false, false]
 let deletingWeatherBlocks = false;
+let searchingWeatherBlocksCleared = false;
+let advancedBlocksIndex = null;
 let currentBtns;
-let deletedIndex;
+let newIndex = 4;
+let searchingIndex = null;
+let weatherRendered = false;
 let buttonInputValue;
-let nameOfTheCityFromButton;
-let nameOfTheCityFromSearch;
-let cityRenders = {
-    cityRendered1: false,
-    cityRendered2: false,
-    cityRendered3: false,
-    cityRendered4: false
-}
+let nameOfTheCity;
+let weatherSlider;
+let weatherSlider1;
+let currentSearchId = 0;
 
 // ------ DOM ELEMENTS ------
-const searchInput = document.querySelector(".search-bar > input")
-const signUpUserInput = document.querySelector("#signup-user")
-const signUpPassInput = document.querySelector("#signup-pass")
-const signUpBtn = document.querySelector("#signup-button")
-const signInBtn = document.querySelector("#signin-button")
+const fullWeatherContainers = document.querySelectorAll(".full-weather-container")
+const searchInput = document.querySelector(".search-input")
 const addCityButtonBlocks = document.querySelectorAll(".add-city-button-block")
 const addCityH1 = document.querySelector(".add-city-button-h1")
 const addCityButton = document.querySelector(".add-city-button")
+const addButonBlock = document.querySelector(".add-city-button-block")
+const addButtonsToggle = document.querySelectorAll(".action-button-toggle")
+const resetButtons = document.querySelectorAll(".action-button-reset")
+const reloadButtons = document.querySelectorAll(".action-button-reload")
 const sliderButtons = {
-    right: document.querySelectorAll(".right-arrow"),
-    left: document.querySelectorAll(".left-arrow")
+    right: document.querySelector("#w-arrow1"),
+    left: document.querySelector("#w-arrow2")
 }
-const weatherBlocks1 = {
-    1: document.getElementById("weather-1"),
-    2: document.getElementById("weather-2"),
-    3: document.getElementById("weather-3"),
-    4: document.getElementById("weather-4")
+const templates = {
+    easy: document.querySelector("#weather-card-template"),
+    advanced: document.querySelector("#advanced-weather-card-template")
 }
-const weatherBlocks2 = {
-    1: document.getElementById("weather-container-1"),
-    2: document.getElementById("weather-container-2"),
-    3: document.getElementById("weather-container-3"),
-    4: document.getElementById("weather-container-4")
-}
-const weatherBlocks3 = {
-    1: document.getElementById("daily-weather-1"),
-    2: document.getElementById("daily-weather-2"),
-    3: document.getElementById("daily-weather-3"),
-    4: document.getElementById("daily-weather-4")
-}
-
-//------BACKEND--------
-const BASE_URL = "http://127.0.0.1:8000"
 
 // ADVANCED SLIDER BUTTON 
 const slides1 = [ Array.from(document.querySelectorAll(".full-weather-container")) ];
-
-// 1-7 DAYS SLIDER BUTTON 
-const slides2 = [ Array.from(document.querySelectorAll(".eight-days-weather")) ];
 
 function weatherSVGs(id) {
     const weatherSVGs = {
@@ -112,15 +92,11 @@ function renderCityWeather(id, data, data2, isButton = false) {
     updateTime(id, data);
 
     const weatherInfo = {name: document.querySelectorAll(`.h1-${id}`), tempRn: document.querySelectorAll(`.temp-rn-p-${id}`), aboutRn: document.querySelectorAll(`.about-rn-${id}`), aboutFeels: document.querySelectorAll(`.about-feels-${id}`), wind: document.querySelectorAll(`.wind-${id}`), humidity: document.querySelectorAll(`.humidity-${id}`), visibility: document.querySelectorAll(`.visibility-${id}`), pressure: document.querySelectorAll(`.pressure-${id}`), wd: document.querySelectorAll(`.wd-${id}`), uv: document.querySelectorAll(`.uv-${id}`), dp: document.querySelectorAll(`.dp-${id}`)};
-
     if(!isButton) {
         weatherInfo.name.forEach((el)=> el.textContent = data.name)
         // ------------ FOR H1 OF ADVANCED WEATHER CONTAINERS-------------
-        document.querySelector(`#weather-container-${id} > .weather-h1`).textContent = data.name;
-        document.querySelector(`#weather-container-${id} > .weather-h1`).classList.add("visible")
-        // ------------ FOR H2 OF DAILY WEATHER CONTAINERS-------------
-        document.querySelector(`#daily-weather-${id} > .weather-h2`).textContent = data.name;
-        document.querySelector(`#daily-weather-${id} > .weather-h2`).classList.add("visible")
+        document.querySelector(`#full-weather-container-${id} > .weather-h1`).textContent = data.name;
+        document.querySelector(`#full-weather-container-${id} > .weather-h1`).classList.add("visible")
     }
     weatherInfo.tempRn.forEach((el)=> el.textContent = Math.round(data.main.temp)+"°")
     weatherInfo.aboutRn.forEach((el)=> el.textContent = data.weather[0].description.replace(/\b\w/g, c => c.toUpperCase()))
@@ -128,7 +104,7 @@ function renderCityWeather(id, data, data2, isButton = false) {
         const text = el.textContent.trim();
         const words = text.split(/\s+/);
 
-        if (words.length > 2) {
+        if (words.length > 2 && text.length > 15) {
             const firstPart = words.slice(0, 2).join(' ');
             const secondPart = words.slice(2).join(' ');
         
@@ -181,77 +157,90 @@ function renderCityWeather(id, data, data2, isButton = false) {
         updateTime(id, data);
     }, 60000);
 
-    if(isButton) {
+    if(isButton && addingBlockFromButton) {
+        let i = getIndex();
+        const weatherBlock = document.querySelector(`#mini-weather-container-${i}`);
         checkInputH1();
+        weatherBlock.classList.add("grid");
+        weatherRendered = true;
+        searchingWeatherBlocksCleared = false;
     }
-
-    const key = `cityRendered${id}`;
-    cityRenders[key] = true;
 }
 
 function enableCityEditMode(id) {
-    document.querySelectorAll(`.h1-${id}`).forEach((el) => el.innerHTML = `<form class="form-${id}"><input class="button-h1 input-${id}" type="text"></form>`);
-    document.querySelectorAll(`.h2-${id}`).forEach((el) => el.innerHTML = `<form class="form-${id}"><input class="button-h1 input-${id}" type="text"></form>`);
-    document.querySelectorAll(`#weather-container-${id} > .weather-h1`).forEach((el) => el.classList.add("visible"))
-    document.querySelectorAll(`.h2-${id}`).forEach((el) => el.classList.add("visible"))
+    document.querySelectorAll(`.h1-${id}`).forEach((el) => el.innerHTML = `<div class="input-form-wrapper"><form class="input-form form-${id}"><div class="button-h1-input-wrapper"><input class="button-h1-input input-${id}" type="text"></div></form><button class="cancel-btn c-btn-${id} small-cancel-btn"><svg class="cancel-svg small-cancel-svg" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#666666"><path d="M256-192.35 192.35-256l224-224-224-224L256-767.65l224 224 224-224L767.65-704l-224 224 224 224L704-192.35l-224-224-224 224Z"/></svg></button></div>`);
+    document.querySelectorAll(`.c-btn-${id}`).forEach(el => el.addEventListener("click", ()=> {
+        cancelBtnInput(id)
+    }))
+    document.querySelectorAll(`#full-weather-container-${id} > .weather-h1`).forEach((el) => el.classList.add("visible"))
 }
 
 function disableCityEditMode(id, cityNameButton) {
     document.querySelectorAll(`.h1-${id}`).forEach((el) => el.textContent = cityNameButton);
-    document.querySelectorAll(`.h2-${id}`).forEach((el) => el.textContent = cityNameButton);
 }
 
-function cityHourlyWeather(id, svgIcons, data) {
+function cityHourlyWeather(id, svgIcons, data, isButton = false) {
     
     const hourlyWeatherArray = []
     
-    for(i = 1; i < 25; i++) {
+    for(let i = 1; i < 25; i++) {
         const WeatherInfo = { hourTime: document.querySelector(`.hour-${i}-${id} > .hour-time`), svgContainer: document.querySelector(`.hour-${i}-${id} > .svg-container`), chanceOfPrecipitation: document.querySelector(`.hour-${i}-${id} > .chance-of-precipitation`), hourlyWeatherDeg: document.querySelector(`.hour-${i}-${id} > .hourly-weather-deg`) };
         hourlyWeatherArray.push(WeatherInfo);
     }
     
-    for(i = 0; i < 12; i++) {
+    for(let i = 0; i < 12; i++) {
         hourlyWeatherArray[i].hourTime.textContent = `${i+1} a.m`;
     }
     
-    for(i = 0; i < 12; i++) {
+    for(let i = 0; i < 12; i++) {
         hourlyWeatherArray[i+12].hourTime.textContent = `${i+1} p.m`;
     }
     
-    for(i = 0; i < 24; i++) {
+    for(let i = 0; i < 24; i++) {
         hourlyWeatherArray[i].svgContainer.innerHTML = `${svgIcons[i]}`;
         hourlyWeatherArray[i].chanceOfPrecipitation.textContent = `${data.hourly.precipitation_probability[i]}%`;
         hourlyWeatherArray[i].hourlyWeatherDeg.textContent = `${Math.round(data.hourly.temperature_2m[i])}°`;
     }
+    if(isButton) {
+        if(addingBlockFromButton) {
+            const weatherBlock1 = document.querySelector(`#weather-container-${id}`)
+            const weatherBlock2 = document.querySelector(`#daily-weather-${id}`)
+            weatherBlock1.classList.remove("hidden")
+            weatherBlock2.classList.remove("hidden")
+        } else {
+            deleteNewWeatherBlock();
+        }
+    }
 }
 
-function cityDailyWeather(id, svgIcons, data) {
+function cityDailyWeather(id, svgIcons, data, isButton = false) {
 
     const dailyWeatherArray = []
 
-    for(i = 1; i < 9; i++) {
+    for(let i = 1; i < 9; i++) {
         const WeatherInfo = { dayOfTheWeek: document.querySelector(`.day-${i}-${id} > .day-of-the-week`), minMaxTemp: document.querySelector(`.day-${i}-${id} > .min-max-temp`), svgContainer: document.querySelector(`.day-${i}-${id} > .svg-container-2`) };
         dailyWeatherArray.push(WeatherInfo);
     }
 
     const week = dayOfTheWeek(data)
 
-    for(i = 0; i < 8; i++) {
+    for(let i = 0; i < 8; i++) {
         dailyWeatherArray[i].dayOfTheWeek.textContent = week[i];
         dailyWeatherArray[i].minMaxTemp.textContent = `${Math.round(data.daily.temperature_2m_min[i])} / ${Math.round(data.daily.temperature_2m_max[i])}`;
         dailyWeatherArray[i].svgContainer.innerHTML = `${svgIcons[i]}`;
     }
 }
 
-function clearCityWeather(id) {
+function clearCityWeather(id, searching = false) {
 
     clearUpdateTime(id);
 
     const weatherInfo = {name: document.querySelectorAll(`.h1-${id}`), tempRn: document.querySelectorAll(`.temp-rn-p-${id}`), aboutRn: document.querySelectorAll(`.about-rn-${id}`), aboutFeels: document.querySelectorAll(`.about-feels-${id}`), wind: document.querySelectorAll(`.wind-${id}`), humidity: document.querySelectorAll(`.humidity-${id}`), visibility: document.querySelectorAll(`.visibility-${id}`), pressure: document.querySelectorAll(`.pressure-${id}`), wd: document.querySelectorAll(`.wd-${id}`), uv: document.querySelectorAll(`.uv-${id}`), dp: document.querySelectorAll(`.dp-${id}`)};
-
-    weatherInfo.name?.forEach((el)=> el.textContent = "")
-    document.querySelector(`#weather-container-${id} > .weather-h1`).classList.remove("visible")
-    document.querySelector(`#weather-container-${id} > .weather-h1`).textContent = "Default";
+    if(!searching) {
+        weatherInfo.name?.forEach((el)=> el.textContent = "")
+        document.querySelector(`#full-weather-container-${id} > .weather-h1`).classList.remove("visible")
+        document.querySelector(`#full-weather-container-${id} > .weather-h1`).textContent = "Default";
+    }
     weatherInfo.tempRn.forEach((el)=> el.textContent = "")
     weatherInfo.aboutRn.forEach((el)=> el.textContent = "")
     weatherInfo.aboutFeels.forEach((el)=> el.textContent = "")
@@ -267,30 +256,26 @@ function clearCityWeather(id) {
     weatherInfo.wd.forEach((el) => {
         el.style.backgroundImage = ``;
     });
-
-    const key = `cityRendered${id}`;
-    cityRenders[key] = false;
-    renders[id] = true;
 }
 
 function clearCityHourlyWeather(id) {
     
     const hourlyWeatherArray = []
     
-    for(i = 1; i < 25; i++) {
+    for(let i = 1; i < 25; i++) {
         const WeatherInfo = { hourTime: document.querySelector(`.hour-${i}-${id} > .hour-time`), svgContainer: document.querySelector(`.hour-${i}-${id} > .svg-container`), chanceOfPrecipitation: document.querySelector(`.hour-${i}-${id} > .chance-of-precipitation`), hourlyWeatherDeg: document.querySelector(`.hour-${i}-${id} > .hourly-weather-deg`) };
         hourlyWeatherArray.push(WeatherInfo);
     }
     
-    for(i = 0; i < 12; i++) {
+    for(let i = 0; i < 12; i++) {
         hourlyWeatherArray[i].hourTime.textContent = "";
     }
     
-    for(i = 0; i < 12; i++) {
+    for(let i = 0; i < 12; i++) {
         hourlyWeatherArray[i+12].hourTime.textContent = "";
     }
     
-    for(i = 0; i < 24; i++) {
+    for(let i = 0; i < 24; i++) {
         hourlyWeatherArray[i].svgContainer.innerHTML = "";
         hourlyWeatherArray[i].chanceOfPrecipitation.textContent = "";
         hourlyWeatherArray[i].hourlyWeatherDeg.textContent = "";
@@ -301,12 +286,12 @@ function clearCityDailyWeather(id) {
 
     const dailyWeatherArray = []
 
-    for(i = 1; i < 9; i++) {
+    for(let i = 1; i < 9; i++) {
         const WeatherInfo = { dayOfTheWeek: document.querySelector(`.day-${i}-${id} > .day-of-the-week`), minMaxTemp: document.querySelector(`.day-${i}-${id} > .min-max-temp`), svgContainer: document.querySelector(`.day-${i}-${id} > .svg-container-2`) };
         dailyWeatherArray.push(WeatherInfo);
     }
 
-    for(i = 0; i < 8; i++) {
+    for(let i = 0; i < 8; i++) {
         dailyWeatherArray[i].dayOfTheWeek.textContent = "";
         dailyWeatherArray[i].minMaxTemp.textContent = "";
         dailyWeatherArray[i].svgContainer.innerHTML = "";
@@ -390,13 +375,13 @@ async function registration() {
     console.log(data)
 }
 
-for(let i = 1; i <= 4; i++) {
-    activeHandlers.push({
-        h1: () => disableCityEditMode(i, nameOfTheCityFromButton),
-        city: (e) => addRemoveCity(e),
-        prevent: (e) => e.preventDefault()
-    })
-}
+// for(let i = 1; i <= 4; i++) {
+//     activeHandlers.push({
+//         h1: () => disableCityEditMode(i, nameOfTheCity),
+//         city: (e) => addRemoveCity(e),
+//         prevent: (e) => e.preventDefault(),
+//     })
+// }
 
 function hideBlock() {
     const buttonBlockContainer = document.querySelector(".block-container")
@@ -426,17 +411,13 @@ function showButtonH1() {
 
 function hideSliderButtons() {
     for(let key in sliderButtons) {
-        sliderButtons[key].forEach(key => {
-            key.classList.add("hidden")
-        })
+        sliderButtons[key].classList.add("hidden")
     }
 }
 
 function showSliderButtons() {
     for(let key in sliderButtons) {
-        sliderButtons[key].forEach(key => {
-            key.classList.remove("hidden")
-        })
+        sliderButtons[key].classList.remove("hidden")
     }
 }
 
@@ -454,73 +435,72 @@ function renderAddButton1() {
     }
 }
 
-function renderAddButton(data, deleted = false) {
-    for(let i = 1; i < 5; i++) {
-        const weatherContainerH1 = data[i].querySelector(`.weather-h1`)
-        const weatherContainerH2 = data[i].querySelector(`.weather-h2`)
-        const weatherContainer = data[i].querySelector(`.weather-container`)
-        const dailyWeatherContainer = data[i].querySelector(`.eight-days-weather-container`)
-        const weatherContainerAddButton = data[i].querySelector(`.add-city-button-block-1`)
-        
-        if(deleted) {
-            if(!data[i].classList.contains("opacity")) {
-                data[i].classList.add("block-container")
-                weatherContainerH1?.classList.add("hidden");
-                weatherContainerH2?.classList.add("hidden")
-                weatherContainer?.classList.add("hidden");
-                dailyWeatherContainer?.classList.add("hidden")
-                weatherContainerAddButton.classList.add("grid")
-                data[i].classList.remove("hidden")
-                data[i].classList.add("opacity")
-                break;
-            }
-        }
-        else {
-            if(data[i].classList.contains("hidden")) {
-                data[i].classList.add("block-container")
-                weatherContainerH1?.classList.add("hidden");
-                weatherContainerH2?.classList.add("hidden")
-                weatherContainer?.classList.add("hidden");
-                dailyWeatherContainer?.classList.add("hidden")
-                weatherContainerAddButton.classList.add("grid")
-                data[i].classList.remove("hidden")
-                data[i].classList.add("opacity")
-                if(deletingWeatherBlocks) {
-                    autoSwitchByElement(data[i])
-                }
-                break;
-            }
-        }
+function renderAddButton1H1() {
+    if(Cities.length === 0) {
+        showButtonH1()
+    }
+    else if(Cities.length > 0 && Cities.length < 4) {
+        hideButtonH1()
     }
 }
 
-function hideAddButton(data, deletion = false) {
-    for(let i = 1; i <= 4; i++) {
-        if(data[i].classList.contains("block-container")) {
-            data[i].classList.remove("block-container")
-            const weatherContainerH1 = data[i].querySelector(`.weather-h1`)
-            const weatherContainer = data[i].querySelector(`.weather-container`)
-            const weatherContainerH2 = data[i].querySelector(`.weather-h2`)
-            const dailyWeatherContainer = data[i].querySelector(`.eight-days-weather-container`)
-            const weatherContainerAddButton = data[i].querySelector(`.add-city-button-block-1`)
-            weatherContainerH1?.classList.remove("hidden");
-            weatherContainerH2?.classList.remove("hidden");
-            weatherContainer?.classList.remove("hidden");
-            dailyWeatherContainer?.classList.remove("hidden");
-            weatherContainerAddButton.classList.remove("grid")
-            data[i].classList.remove("opacity")
-            if(deletion) {
-                data[i].classList.add("hidden")
-            }
+function hideWeatherBlocks(id) {
+    const weatherBlock1 = document.querySelector(`#mini-weather-container-${id}`);
+    const weatherBlock2 = document.querySelector(`#weather-container-${id}`)
+    const weatherBlock3 = document.querySelector(`#daily-weather-${id}`)
+    weatherBlock1.classList.remove("grid")
+    weatherBlock2.classList.add("hidden")
+    weatherBlock3.classList.add("hidden")
+    // clearCityWeather(id, true)
+    // clearCityHourlyWeather(id)
+    // clearCityDailyWeather(id)
+    searchingWeatherBlocksCleared = true;
+}
+
+function renderAddButton(cancelInput = false) {
+    if(Cities.length < 4) {
+        let i;
+        if(cancelInput) {
+            i = searchingIndex;
+        } else {
+            i = getIndex();
         }
+    
+        const fullWeatherContainer = document.querySelector(`#full-weather-container-${i}`)
+        const weatherContainer = fullWeatherContainer.querySelector(".weather-container")
+        const weatherContainerH1 = fullWeatherContainer.querySelector(`.weather-h1`)
+        const dailyWeatherContainer = fullWeatherContainer.querySelector(`.eight-days-weather`)
+        const weatherContainerAddButton = fullWeatherContainer.querySelector(`.add-city-button-block-1`)
+        
+        fullWeatherContainer.classList.add("block-container", "opacity")
+        weatherContainerH1?.classList.add("hidden");
+        weatherContainer.classList.add("hidden");
+        dailyWeatherContainer?.classList.add("hidden")
+        weatherContainerAddButton.classList.add("grid")
+        fullWeatherContainer.classList.remove("hidden")
+        // if(deletingWeatherBlocks) {
+        //     autoSwitchByElement(fullWeatherContainer)
+        // }
     }
+}
+
+function hideAddButton() {
+    let i = getIndex();
+    const fullWeatherContainer = document.querySelector(`#full-weather-container-${i}`)
+    const weatherContainer = fullWeatherContainer.querySelector(".weather-container")
+    const weatherContainerH1 = fullWeatherContainer.querySelector(`.weather-h1`)
+    // const dailyWeatherContainer = fullWeatherContainer.querySelector(`.eight-days-weather`)
+    const weatherContainerAddButton = fullWeatherContainer.querySelector(`.add-city-button-block-1`)
+    fullWeatherContainer.classList.remove("block-container")
+    weatherContainerH1?.classList.remove("hidden");
+    weatherContainerAddButton.classList.remove("grid")
+    weatherContainer.classList.remove("opacity")
 }
 
 function renderSliderButtons() {
-    if(Cities.length >= 1 || addingBlockFromSearch) {
+    if(Cities.length >= 1 && addButton || Cities.length >= 1 && addingBlockFromSearch || Cities.length > 1 && !addButton) {
         showSliderButtons();
-    }
-    else {
+    } else {
         hideSliderButtons();
     }
 }
@@ -534,8 +514,6 @@ async function buttonFetchWeatherNew(id) {
 
         if (!res.ok) {
             if (res.status === 404) {
-                renderAddButton(weatherBlocks2, true);
-                renderAddButton(weatherBlocks3, true);
                 console.error("Город не найден (404)");
                 return;
             }
@@ -543,19 +521,21 @@ async function buttonFetchWeatherNew(id) {
         }
 
         renderCityWeather(id, data, data2, true)
-        fetchDailyWeatherNew(id, true);
         fetchHourlyWeatherNew(id, true);
-        nameOfTheCityFromButton = data.name;
+        fetchDailyWeatherNew(id, true);
+        nameOfTheCity = data.name;
     }
     catch(err) {
         console.log(`error ${err}`)
     }
 }
 
-async function searchForCity(input) {
+async function searchForCity(input, requestId) {
     const url = `https://geocoding-api.open-meteo.com/v1/search?name=${input.value}&count=1&format=json`
     const res = await fetch(url)
     const data = await res.json()
+
+    if(requestId !== currentSearchId) return;
 
     if(!data.results) {
         console.log("City is not found");
@@ -568,12 +548,12 @@ async function searchForCity(input) {
             lat: city.latitude,
             long: city.longitude
         };
-        let cityNameCheck = Cities.includes(cityInfo.name);
+        let cityCheck = !Cities.includes(cityInfo.name) && Cities.length < 4;
         console.log(cityInfo)
-        if(!cityNameCheck) {
+        if(cityCheck) {
             addingBlockFromButton = false;
             addingBlockFromSearch = true;
-            fetchWeatherNew()
+            fetchWeatherNew(requestId)
         }
     }
 }
@@ -602,167 +582,156 @@ async function searchForCityWithButton(input, id) {
     }
 }
 
-function findTheWeatherBlock(data, data2) {
-    for(let i = 1; i <= 4; i++) {
-        if(!weatherBlocks1[i].classList.contains("opacity")) {
-            let index = i-1;
-            renderCityWeather(i, data, data2);
-            weatherBlocks1[i].classList.add("grid")
-            currentBtns = document.querySelectorAll(`.btn-${i}`);
-            currentBtns.forEach(currentBtn => {
-                if(!currentBtn.dataset.hasListener) {
-                    currentBtn?.addEventListener("click", addRemoveCity)
-                    currentBtn.dataset.hasListener = "true";
-                }
-            })
-            deletedIndex = index;
-            break;
-        }
+function findTheWeatherBlock(data, data2, requestId) {
+    if (requestId !== currentSearchId) return;
+    let i = getIndex()
+
+    const weatherBlock = document.querySelector(`#mini-weather-container-${i}`);
+    let index = i-1;
+    cancelBtn(i)
+    renderCityWeather(i, data, data2);
+    if(addingBlockFromSearch) {
+        weatherBlock.classList.add("grid")
+        weatherBlock.closest(".weather").classList.add("grid")
+        currentBtns = document.querySelectorAll(`.btn-${i}`);
+        currentBtns.forEach(currentBtn => {
+            if(!currentBtn.dataset.hasListener) {
+                currentBtn?.addEventListener("click", addRemoveCity)
+                currentBtn.dataset.hasListener = "true";
+            }
+        })
     }
+    advancedBlocksIndex = i;
 }
 
 function findTheHourlyWeatherBlock(id, data, data2, icons, button = false) {
-    let index;
-    if(id === undefined) {
-        for(let i = 1; i <= 4; i++) {
-            if(weatherBlocks2[i].classList.contains("block-container")) {
-                index = i-1;
-                break;
-            }
-        }
-    }
-    else {
-        index = id-1;
-    }
-    let i = index+1
-    const svgIcons = icons.map((iconName, index1) => {
-        const uniqueId = `grad-${index1}-${index+1}`;
-        const allIcons = weatherSVGs(uniqueId); 
+    let i = button ? id : advancedBlocksIndex;
+    const svgIcons = icons.map((iconName, index) => {
+        const uniqueId = `grad-${index}-${i}`;
+        const allIcons = weatherSVGs(uniqueId);
         return allIcons[iconName] || allIcons["cloudy"];
     });
-    cityHourlyWeather(index+1, svgIcons, data2)
-    const weatherContainerH1 = weatherBlocks2[i].querySelector(`.weather-h1`)
-    const weatherContainer = weatherBlocks2[i].querySelector(`.weather-container`)
-    const weatherContainerAddButton = weatherBlocks2[i].querySelector(`.add-city-button-block-1`)
-    weatherContainerH1.classList.remove("hidden");
-    weatherContainer.classList.remove("hidden");
-    weatherContainerAddButton.classList.remove("grid")
-    weatherBlocks2[i].classList.remove("block-container");
-    weatherBlocks2[i].classList.remove("hidden")
-    if(!button) {
-        weatherBlocks2[i].classList.remove("opacity")
-    }
-    currentBtns = document.querySelectorAll(`.btn-${i}`);
-    currentBtns.forEach(currentBtn => {
-        if(!currentBtn.dataset.hasListener) {
-            currentBtn?.addEventListener("click", addRemoveCity)
-            currentBtn.dataset.hasListener = "true";
+    cityHourlyWeather(i, svgIcons, data2, button)
+    if(addingBlockFromButton || addingBlockFromSearch) {
+        const weatherContainer = document.querySelector(`#full-weather-container-${i}`)
+        const weatherContainerH1 = weatherContainer.querySelector(`.weather-h1`)
+        const weatherContainerAddButton = weatherContainer.querySelector(`.add-city-button-block-1`)
+        weatherContainerH1.classList.remove("hidden");
+        weatherContainerAddButton.classList.remove("grid")
+        weatherContainer.classList.remove("block-container");
+        weatherContainer.classList.remove("hidden");
+        if(!button) {
+            weatherContainer.classList.add("opacity")
+            weatherContainer.querySelector(".weather-container").classList.remove("hidden")
         }
-    })
-    deletedIndex = index;
+        currentBtns = document.querySelectorAll(`.btn-${i}`);
+        currentBtns.forEach(currentBtn => {
+            if(!currentBtn.dataset.hasListener) {
+                currentBtn?.addEventListener("click", addRemoveCity)
+                currentBtn.dataset.hasListener = "true";
+            }
+        })
+        autoSwitchByElement(weatherContainer)
+    }
+    renderSliderButtons();
+    searchingIndex = i;
 }
 
 function findTheDailyWeatherBlock(id, data, data2, icons, button = false) {
-    let index;
-    if(id === undefined) {
-        for(let i = 1; i <= 4; i++) {
-            if(weatherBlocks3[i].classList.contains("block-container")) {
-                index = i-1;
-                break;
-            }
-        }
-    }
-    else {
-        index = id-1;
-    }
-    let i = index+1
-    const svgIcons = icons.map((iconName, index1) => {
-        const uniqueId = `grad-${index1}-${index+5}`;
-        const allIcons = weatherSVGs(uniqueId); 
+    let i = button ? id : advancedBlocksIndex;
+    const svgIcons = icons.map((iconName, index) => {
+        const uniqueId = `grad-${index}-${i+4}`;
+        const allIcons = weatherSVGs(uniqueId);
         return allIcons[iconName] || allIcons["cloudy"];
     });
-    cityDailyWeather(i, svgIcons, data2)
-    const weatherContainerH2 = weatherBlocks3[i].querySelector(`.weather-h2`)
-    const dailyWeatherContainer = weatherBlocks3[i].querySelector(`.eight-days-weather-container`)
-    const weatherContainerAddButton = weatherBlocks3[i].querySelector(`.add-city-button-block-1`)
-    weatherContainerH2.classList.remove("hidden");
-    dailyWeatherContainer.classList.remove("hidden");
-    weatherContainerAddButton.classList.remove("grid")
-    weatherBlocks3[i].classList.remove("block-container");
-    weatherBlocks3[i].classList.remove("hidden")
-    if(!button) {
-        weatherBlocks3[i].classList.remove("opacity")
-    }
-    currentBtns = document.querySelectorAll(`.btn-${i}`);
-    currentBtns.forEach(currentBtn => {
-        if(!currentBtn.dataset.hasListener) {
-            currentBtn?.addEventListener("click", addRemoveCity)
-            currentBtn.dataset.hasListener = "true";
+    cityDailyWeather(i, svgIcons, data2, button)
+    if(addingBlockFromButton || addingBlockFromSearch) {
+        const weatherContainer = document.querySelector(`#daily-weather-${i}`)
+        if(!button) {
+            weatherContainer.classList.remove("opacity")
+            weatherContainer.classList.remove("hidden")
         }
-    })
-    deletedIndex = index;
+        currentBtns = document.querySelectorAll(`.btn-${i}`);
+        currentBtns.forEach(currentBtn => {
+            if(!currentBtn.dataset.hasListener) {
+                currentBtn?.addEventListener("click", addRemoveCity)
+                currentBtn.dataset.hasListener = "true";
+            }
+        })
+    }
 }
 
 function deleteNewWeatherBlock() {
-    weatherBlocks1[deletedIndex+1].classList.remove("grid")
-    weatherBlocks1[deletedIndex+1].classList.remove("opacity")
-    renderAddButton(weatherBlocks2, true)
-    renderAddButton(weatherBlocks3, true)
-    clearCityWeather(deletedIndex+1);
-    clearCityHourlyWeather(deletedIndex+1)
-    clearCityDailyWeather(deletedIndex+1)
+    addingBlockFromSearch = false;
+    addingBlockFromButton = false;
+    let i = searchingIndex;
+    if(i !== null) {
+        const fullWeatherContainer = document.querySelector(`#full-weather-container-${i}`);
+        const weatherBlock = document.querySelector(`#mini-weather-container-${i}`);
+        weatherBlock.classList.remove("grid")
+        weatherBlock.parentElement.classList.remove("grid")
+        weatherBlock.classList.remove("opacity")
+        fullWeatherContainer.classList.remove("opacity")
+        fullWeatherContainer.classList.add("hidden")
+        if(addButton) {
+            renderAddButton()
+        }
+        clearCityWeather(i);
+        clearCityHourlyWeather(i)
+        clearCityDailyWeather(i)
+    }
 }
 
 function checkInputH1() {
-    for(let i = 1; i <= 4; i++) {
-        let index = i-1;
-        if(deletedIndex === index) {
-            let formH1s = document.querySelectorAll(`.form-${i}`)
-            let btns = document.querySelectorAll(`.btn-${i}`)
-            formH1s.forEach(formH1 => {
-                formH1?.addEventListener("submit", activeHandlers[index].prevent)
-                formH1?.addEventListener("submit", activeHandlers[index].h1)
-                formH1?.addEventListener("submit", activeHandlers[index].city)
-            })
-            btns.forEach(btn => {
-                if(!btn.dataset.hasH1Listener) {
-                    btn?.addEventListener("click", activeHandlers[index].h1)
-                    btn.dataset.hasH1Listener = "true";
-                }
-                if(!btn.dataset.hasListener) {
-                    btn?.addEventListener("click", activeHandlers[index].city)
-                    btn.dataset.hasListener = "true";
-                }
-            })
-            break;
-        }
+    let i = getIndex();
+    let formH1s = document.querySelectorAll(`.form-${i}`)
+    let btns = document.querySelectorAll(`.btn-${i}`)
+    const newHandlers = {
+        h1: () => disableCityEditMode(i, nameOfTheCity),
+        city: (e) => addRemoveCity(e),
+        prevent: (e) => e.preventDefault()
     }
+    formH1s.forEach(formH1 => {
+        formH1?.addEventListener("submit", newHandlers.prevent)
+        formH1?.addEventListener("submit", newHandlers.h1)
+        formH1?.addEventListener("submit", newHandlers.city)
+    })
+    btns.forEach(btn => {
+        if(!btn.dataset.hasH1Listener) {
+            btn?.addEventListener("click", newHandlers.h1)
+            btn.dataset.hasH1Listener = "true";
+        }
+        if(!btn.dataset.hasListener) {
+            btn?.addEventListener("click", newHandlers.city)
+            btn.dataset.hasListener = "true";
+        }
+    })
 }
 
-function antiCheckInputH1() {
-    for(let i = 1; i <= 4; i++) {
-        let index = i-1;
-        if(deletedIndex === index) {
-            let formH1s = document.querySelectorAll(`.form-${i}`)
-            let btns = document.querySelectorAll(`.btn-${i}`)
-            formH1s.forEach(formH1 => {
-                formH1?.removeEventListener("submit", activeHandlers[index].h1)
-                formH1?.removeEventListener("submit", activeHandlers[index].city)
-            })
-            btns.forEach(btn => {
-                if(btn.dataset.hasH1Listener) {
-                    btn?.removeEventListener("click", activeHandlers[index].h1)
-                    delete btn.dataset.hasH1Listener;
-                }
-                if(btn.dataset.hasListener) {
-                    btn?.removeEventListener("click", activeHandlers[index].city)
-                    delete btn.dataset.hasListener;
-                }
-            })
-            break;
-        }
-    }
-}
+// function antiCheckInputH1() {
+//     let i = getIndex();
+//     let formH1s = document.querySelectorAll(`.form-${i}`)
+//     let btns = document.querySelectorAll(`.btn-${i}`)
+//     const newHandlers = {
+//         h1: () => disableCityEditMode(i, nameOfTheCity),
+//         city: (e) => addRemoveCity(e),
+//         prevent: (e) => e.preventDefault(),
+//     }
+//     formH1s.forEach(formH1 => {
+//         formH1?.removeEventListener("submit", newHandlers.h1)
+//         formH1?.removeEventListener("submit", newHandlers.city)
+//     })
+//     btns.forEach(btn => {
+//         if(btn.dataset.hasH1Listener) {
+//             btn?.removeEventListener("click", newHandlers.h1)
+//             delete btn.dataset.hasH1Listener;
+//         }
+//         if(btn.dataset.hasListener) {
+//             btn?.removeEventListener("click", newHandlers.city)
+//             delete btn.dataset.hasListener;
+//         }
+//     })
+// }
 
 function syncButtonInputs(e) {
     const inputs = document.querySelectorAll(".weather-project-2 input, .weather-project input, .weather-project-3 input");
@@ -774,137 +743,89 @@ function syncButtonInputs(e) {
 }
 
 function findTheWeatherBlockButton1() {
-    for(let i = 1; i <= 4; i++) {
-        if(!weatherBlocks1[i].classList.contains("grid")) {
-            hideBlock();
-            enableCityEditMode(i)
-            let inputH1s = document.querySelectorAll(`.input-${i}`)
-            let formH1s = document.querySelectorAll(`.form-${i}`)
-            let index = i-1;
-            currentBtns = document.querySelectorAll(`.btn-${i}`);
-            currentBtns.forEach(currentBtn => {
-                currentBtn.removeEventListener("click", addRemoveCity)
-                if(currentBtn.dataset.hasH1Listener) {
-                    currentBtn?.removeEventListener("click", activeHandlers[index].h1)
-                    delete currentBtn.dataset.hasH1Listener;
-                }
-                if(currentBtn.dataset.hasListener) {
-                    currentBtn?.removeEventListener("click", activeHandlers[index].city)
-                    delete currentBtn.dataset.hasListener;
-                }
-            })
-            inputH1s.forEach(inputH1 => {
-                inputH1?.addEventListener("input", (e)=> {
-                    syncButtonInputs(e)
-                    antiCheckInputH1();
-                    clearTimeout(timeout)
-                    timeout = setTimeout(() => {
-                        searchForCityWithButton(inputH1, i);
-                    }, 500);
-                })
-            })
-            formH1s.forEach(formH1 => {
-                formH1?.addEventListener("submit", activeHandlers[index].prevent)
-            })
-            weatherBlocks1[i].classList.add("grid")
-            weatherBlocks1[i].classList.add("opacity")
-            deletedIndex = index;
-            addingBlockFromButton = true;
-            break;
-        }
+    let i = getIndex();
+    hideBlock();
+    enableCityEditMode(i)
+    let inputH1s = document.querySelectorAll(`.input-${i}`)
+    let formH1s = document.querySelectorAll(`.form-${i}`)
+    let index = i-1;
+    const newHandlers = {
+        prevent: (e) => e.preventDefault()
     }
-}
-
-function findTheWeatherBlockButton(data) {
-    for(let i = 1; i <= 4; i++) {
-        if(data[i].classList.contains("block-container")) {
-            data[i].classList.remove("hidden")
-            enableCityEditMode(i)
-            let inputH1s = document.querySelectorAll(`.input-${i}`)
-            let formH1s = document.querySelectorAll(`.form-${i}`)
-            let index = i-1;
-            currentBtns = document.querySelectorAll(`.btn-${i}`);
-            currentBtns.forEach(currentBtn => {
-                currentBtn.removeEventListener("click", addRemoveCity)
-                if(currentBtn.dataset.hasH1Listener) {
-                    currentBtn?.removeEventListener("click", activeHandlers[index].h1)
-                    delete currentBtn.dataset.hasH1Listener;
-                }
-                if(currentBtn.dataset.hasListener) {
-                    currentBtn?.removeEventListener("click", activeHandlers[index].city)
-                    delete currentBtn.dataset.hasListener;
-                }
-            })
-            inputH1s.forEach(inputH1 => {
-                inputH1?.addEventListener("input", (e)=> {
-                    syncButtonInputs(e)
-                    antiCheckInputH1();
-                    clearTimeout(timeout)
-                    timeout = setTimeout(() => {
-                        searchForCityWithButton(inputH1, i);
-                    }, 500);
-                })
-            })
-            formH1s.forEach(formH1 => {
-                formH1?.addEventListener("submit", activeHandlers[index].prevent)
-            })
-            hideAddButton(data)
-            data[i].classList.add("opacity")
-            deletedIndex = index;
-            addingBlockFromButton = true;
-            break;
-        }
-    }
-}
-
-function addEventListenerForAddButton(data) {
-    for(let i = 1; i <= 4; i++) {
-        if(data[i].classList.contains("block-container")) {
-            const addCityButton = data[i].querySelector(".add-city-button")
-            if(!addCityButton.dataset.hasListener) {
-                addCityButton.addEventListener("click", ()=> {
-                    findTheWeatherBlockButton(weatherBlocks2)
-                    findTheWeatherBlockButton(weatherBlocks3)
-                    findTheWeatherBlockButton1()
-                })
-                addCityButton.dataset.hasListener = "true";
+    const currentMode = localStorage.getItem("Mode");
+    inputH1s.forEach(inputH1 => {
+        inputH1?.addEventListener("input", (e)=> {
+            if(!searchingWeatherBlocksCleared) {
+                hideWeatherBlocks(i)
             }
+            syncButtonInputs(e)
+            // antiCheckInputH1();
+            clearTimeout(timeout)
+            timeout = setTimeout(() => {
+                searchForCityWithButton(inputH1, i);
+            }, 500);
+        })
+    })
+    formH1s.forEach(formH1 => {
+        formH1?.addEventListener("submit", newHandlers.prevent)
+    })
+    document.querySelector(`#weather-${i}`).classList.add("grid")
+    currentMode === "Advanced" ? inputH1s[1].focus() : inputH1s[0].focus();
+    addingBlockFromButton = true;
+}
+
+function findTheWeatherBlockButton() {
+    let i = getIndex();
+    const fullWeatherContainer = document.querySelector(`#full-weather-container-${i}`)
+    fullWeatherContainer.classList.remove("hidden")
+    enableCityEditMode(i)
+    hideAddButton()
+    addingBlockFromButton = true;
+}
+
+function addEventListenerForAddButton() {
+    if(Cities.length < 4) {
+        let i = getIndex();
+        const fullWeatherContainer = document.querySelector(`#full-weather-container-${i}`)
+        const addCityButton = fullWeatherContainer.querySelector(".add-city-button")
+        if(!addCityButton.dataset.hasListener) {
+            addCityButton.addEventListener("click", ()=> {
+                findTheWeatherBlockButton()
+                findTheWeatherBlockButton1()
+                correctAddButtonsPosition();
+            })
+            addCityButton.dataset.hasListener = "true";
         }
     }
 }
 
-function findDeletedWeatherBlocks() {
-    for(let i = 1; i <= 4; i++) {
-        if(cityRenders[`cityRendered${i}`] === false) {
-            let index = i-1;
-            renders[index] = true;
-            deletedIndex = index;
-            break;
-        }
-    }
-}
-
-async function fetchWeatherNew() {
+async function fetchWeatherNew(requestId) {
     try {
         const res = await fetch(`/api/get-weather?city=${cityInfo.name}`);
         const res2 = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${cityInfo.lat}&longitude=${cityInfo.long}&current_weather=true&hourly=dewpoint_2m,uv_index&timezone=auto`);
         const data = await res.json();
         const data2 = await res2.json();
 
+        if (requestId !== currentSearchId) return;
+
         if (!res.ok) {
             if (res.status === 404) {
-                renderAddButton(weatherBlocks2, true);
-                renderAddButton(weatherBlocks3, true);
+                if(addButton) {
+                    renderAddButton();
+                }
                 console.error("Город не найден (404)");
                 return;
             }
             throw new Error(`Ошибка сервера: ${res.status}`);
         }
-
-        findTheWeatherBlock(data, data2)
+        findTheWeatherBlock(data, data2, requestId)
         fetchHourlyWeatherNew();
         fetchDailyWeatherNew();
-        hideBlock()
+        correctAddButtonsPosition();
+        if(addingBlockFromSearch) {
+            hideBlock()
+        }
+        nameOfTheCity = data.name;
 
     } catch(err) {
         console.log(`error ${err}`)
@@ -943,28 +864,40 @@ async function fetchDailyWeatherNew(id, button = false) {
     }
 }
 
+function addButonBlockTop() {
+    if(Cities.length > 0) {
+        addButonBlock.classList.add("top")
+    } else {
+        addButonBlock.classList.remove("top")
+    }
+}
+
 function addRemoveCity(e) {
     const cityName = e?.currentTarget?.dataset?.cityName || cityInfo.name;
     const number = e?.currentTarget?.dataset?.number;
     let btns = document.querySelectorAll(`.btn-${number}`);
     if (!Cities.includes(cityName) && Cities.length < 4) {
-        renders.includes(true) ? Cities.splice(deletedIndex, 0, cityInfo.name) : Cities.push(cityInfo.name);
+        Cities.push(cityInfo.name);
         currentBtns.forEach(currentBtn => {
-            currentBtn.innerHTML = `<svg class="remove-svg" xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="#434343"><path d="M200-446.67v-66.66h560v66.66H200Z"/></svg>`
-            currentBtn.closest(".weather")?.classList.add("opacity");
-            currentBtn.closest(".full-weather-container")?.classList.add("opacity");
-            currentBtn.closest(".eight-days-weather")?.classList.add("opacity");
-            currentBtn.closest(".full-weather-container")?.classList.remove("deleted");
-            currentBtn.closest(".eight-days-weather")?.classList.remove("deleted");
+            currentBtn.innerHTML = `<svg class="btn-svg remove-svg" xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="#434343"><path d="M200-446.67v-66.66h560v66.66H200Z"/></svg>`
+            currentBtn.closest(".mini-weather-container")?.classList.add("opacity", "glowing-effect", "light-sweep");
+            currentBtn.closest(".weather-container")?.classList.add("opacity");
+            currentBtn.closest(".full-weather-container")?.querySelector(".weather-1").classList.add("glowing-effect", "light-sweep")
+            currentBtn.closest(".full-weather-container")?.querySelector(".weather-2").classList.add("glowing-effect", "light-sweep")
+            currentBtn.closest(".full-weather-container")?.querySelector(".eight-days-weather")?.classList.add("glowing-effect", "opacity", "light-sweep");
+            currentBtn.closest(".full-weather-container")?.querySelector(".mobile-cancel-btn").classList.remove("flex")
+            currentBtn.closest(".full-weather-container")?.querySelector(".desktop-cancel-btn").classList.remove("flex")
+            currentBtn.closest(".mini-weather-container")?.querySelector(".cancel-btn").classList.remove("flex")
+            lightSweepAnimationRemove(currentBtn)
         })
         deletingWeatherBlocks = false;
-        deletions[number-1] = false;
         addingBlockFromButton = false;
+        addingBlockFromSearch = false;
         findingTheWeatherBlock = false;
+        weatherRendered = false;
+        searchInput.value = "";
         getIndexForButtons();
-        if(!deletions.includes(true)) {
-            getNamesForButtons();
-        }
+        getNamesForButtons();
         saveCities();
     }
     else if(Cities.includes(cityName)) {
@@ -972,51 +905,174 @@ function addRemoveCity(e) {
         Cities = Cities.filter(city => city !== cityName);
         if (indexOfRemovedCity !== -1) {
             btns.forEach(btn => {
-                btn?.removeEventListener("click", activeHandlers[number-1].h1)
-                btn.closest(".weather")?.classList.remove("grid")
-                btn.closest(".weather")?.classList.remove("opacity")
-                btn.closest(".full-weather-container")?.classList.add("hidden")
-                btn.closest(".full-weather-container")?.classList.add("deleted")
-                btn.closest(".eight-days-weather")?.classList.add("hidden")
-                btn.closest(".eight-days-weather")?.classList.add("deleted")
-                hideAddButton(weatherBlocks2, true);
-                hideAddButton(weatherBlocks3, true);
-                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="#434343"><path d="M446.67-446.67H200v-66.66h246.67V-760h66.66v246.67H760v66.66H513.33V-200h-66.66v-246.67Z"/></svg>`
+                btn.closest(".weather")?.remove();
+                btn.closest(".full-weather-container")?.remove();
             })
+            weatherSlider.refresh();
+            weatherSlider1.refresh();
             deletingWeatherBlocks = true;
-            deletions[number-1] = true;
-            clearCityWeather(number);
-            clearCityHourlyWeather(number);
-            clearCityDailyWeather(number)
-            if(!addingBlockFromButton) {
-                findDeletedWeatherBlocks();
-            }
         }
         saveCities();
     }
-    if(!addingBlockFromButton) {
-        renderAddButton1();
-        renderAddButton(weatherBlocks2);
-        renderAddButton(weatherBlocks3);
-        addEventListenerForAddButton(weatherBlocks2)
-        addEventListenerForAddButton(weatherBlocks3)
+    const weatherBlocks = document.querySelectorAll(".full-weather-container")
+    if(weatherBlocks.length < 4) {
+        newIndex += 1;
+        renderCards(newIndex)
     }
+    if(!addingBlockFromButton) {
+        if(addButton) {
+            renderAddButton1();
+            renderAddButton();
+            if(deletingWeatherBlocks) {
+                const fullWeatherContainers = document.querySelectorAll(".full-weather-container")
+                for(let i = 0; i <= fullWeatherContainers.length-1; i++) {
+                    if(fullWeatherContainers[i].classList.contains("block-container")) {
+                        autoSwitchByElement(fullWeatherContainers[i])
+                        break;
+                    }
+                }
+            }
+        } else {
+            if(deletingWeatherBlocks) {
+                const fullWeatherContainers = document.querySelectorAll(".full-weather-container")
+                for(let i = fullWeatherContainers.length-1; i >= 0; i--) {
+                    if(fullWeatherContainers[i].classList.contains("opacity")) {
+                        autoSwitchByElement(fullWeatherContainers[i])
+                        break;
+                    }
+                }
+            }
+        }
+        renderAddButton1H1();
+        addEventListenerForAddButton()
+    }
+    addButonBlockTop();
+    correctAddButtonsPosition()
+    weatherBackgroundEasyModeUpdate()
     renderSliderButtons();
 }
 
+function lightSweepAnimationRemove(btn) {
+    const mini = btn.closest(".mini-weather-container");
+    const w1 = btn.closest(".full-weather-container")?.querySelector(".weather-1");
+    const w2 = btn.closest(".full-weather-container")?.querySelector(".weather-2");
+    const w8 = btn.closest(".full-weather-container")?.querySelector(".eight-days-weather");
+
+    [mini, w1, w2, w8].forEach(el => {
+        if (!el) return;
+
+        const handleAnimationEnd = (e) => {
+            if (e.target !== el) return;
+
+            el.classList.remove("light-sweep");
+            el.removeEventListener("animationend", handleAnimationEnd);
+            el.removeEventListener("animationcancel", handleAnimationEnd);
+        };
+
+        el.addEventListener("animationend", handleAnimationEnd);
+        el.addEventListener("animationcancel", handleAnimationEnd);
+    });
+}
+
+function cancelBtnInput(id) {
+    const inputs = document.querySelectorAll(`input-${id}`)
+    const weatherBlock = document.querySelector(`#mini-weather-container-${id}`);
+    document.querySelectorAll(`.h1-${id}`).forEach(el => {
+        el.textContent = "Default";
+        el.classList.remove("visible")
+        el.parentElement.classList.remove("grid")
+    });
+    weatherBlock.classList.remove("grid")
+    if(addButton) {
+        weatherRendered ? renderAddButton(true) : renderAddButton();
+        renderAddButton1();
+    }
+    else {
+        const fullWeatherContainers = document.querySelectorAll(".full-weather-container")
+        for(let i = 0; i <= 3; i++) {
+            if(fullWeatherContainers[i].classList.contains("opacity")) {
+                autoSwitchByElement(fullWeatherContainers[i])
+                break;
+            }
+        }
+        document.querySelector(`#full-weather-container-${id}`).classList.add("hidden")
+    }
+    addingBlockFromButton = false;
+    weatherRendered = false;
+    correctAddButtonsPosition()
+    renderSliderButtons();
+}
+
+function cancelBtn(id) {
+    const cancelBtns = document.querySelectorAll(`.c-btn-${id}`)
+    const handleCancel = () => {
+        if(addButton) {
+            renderAddButton1();
+        }
+        else {
+            let i;
+            const weatherContainers = document.querySelectorAll(".weather-container")
+            for(i = weatherContainers.length; i >= 1; i--) {
+                if(weatherContainers[i-1].classList.contains("opacity")) {
+                    break;
+                }
+            }
+            autoSwitchByElement(document.querySelector(`#full-weather-container-${i}`))
+        }
+        deleteNewWeatherBlock()
+        correctAddButtonsPosition()
+        renderSliderButtons();
+
+        cancelBtns.forEach(btn => btn.classList.remove("flex"))
+        searchInput.value = "";
+        addingBlockFromSearch = false;
+    }
+    cancelBtns.forEach(btn => {
+        updateCancelBtnsVisibility()
+        btn.addEventListener("click", handleCancel, { once: true });
+    })
+}
+
+function updateCancelBtnsVisibility() {
+    const weatherBlocks = document.querySelectorAll(".mini-weather-container");
+    let i = getIndex();
+    const cancelBtns = document.querySelectorAll(`.c-btn-${i}`)
+    cancelBtns.forEach(btn => {
+        btn.classList.add("flex")
+        if(isTablet.matches) {
+            if(btn.classList.contains("desktop-cancel-btn")) {
+                btn.classList.remove("flex")
+            }
+        } else {
+            if(btn.classList.contains("mobile-cancel-btn")) {
+                btn.classList.remove("flex")
+            }
+        }
+    })
+}
+
+isTablet.addEventListener("change", updateCancelBtnsVisibility)
+
 async function renderCitiesWeather() {
-    for(const [index, city] of Cities.entries()) {
+    const weatherBlocks = document.querySelectorAll(".mini-weather-container")
+    for(let i = 1; i <= Cities.length; i++) {
+        const id = weatherBlocks[i-1].id;
+        const lastIdPart = id.split("-").pop();
+        let blockIndex = parseInt(lastIdPart, 10);
         (async function cityrender() {
             try {
-                const weatherBlock = document.getElementById(`weather-${index+1}`);
+                const weatherBlock = document.getElementById(`mini-weather-container-${blockIndex}`);
+                const weatherBlock1 = document.getElementById(`weather-${blockIndex}`);
                 weatherBlock.classList.add("grid")
                 weatherBlock.classList.add("opacity")
-                const currentBtns = document.querySelectorAll(`.btn-${index+1}`)
+                weatherBlock.classList.add("glowing-effect")
+                weatherBlock1.classList.add("grid")
+                const currentBtns = document.querySelectorAll(`.btn-${blockIndex}`)
                 currentBtns.forEach(currentBtn => {
-                    currentBtn.innerHTML = `<svg class="remove-svg" xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="#434343"><path d="M200-446.67v-66.66h560v66.66H200Z"/></svg>`
+                    currentBtn.innerHTML = `<svg class="btn-svg remove-svg" xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="#434343"><path d="M200-446.67v-66.66h560v66.66H200Z"/></svg>`
                 })
-                const res = await fetch(`/api/get-weather?city=${city}`);
-                const res2 = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${city}&count=1&format=json`)
+                const res = await fetch(`/api/get-weather?city=${Cities[i-1]}`);
+                const res2 = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${Cities[i-1]}&count=1&format=json`)
                 const data = await res.json();
                 const data2 = await res2.json();
                 const cityInfoData = data2.results[0];
@@ -1027,11 +1083,13 @@ async function renderCitiesWeather() {
                 const res3 = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${cityInfo.lat}&longitude=${cityInfo.long}&current_weather=true&hourly=dewpoint_2m,uv_index&timezone=auto`);
                 const data3 = await res3.json()
     
-                renderCityWeather(index+1, data, data3);
+                renderCityWeather(blockIndex, data, data3);
                 searchInProcess = false;
                 currentBtns.forEach(currentBtn => {
-                    currentBtn.removeEventListener("click", addRemoveCity);
-                    currentBtn.addEventListener("click", addRemoveCity);
+                    if(!currentBtn.dataset.hasListener) {
+                        currentBtn.addEventListener("click", addRemoveCity);
+                        currentBtn.dataset.hasListener = "true";
+                    }
                 })
             } catch(err) {
                 console.log(`error ${err}`)
@@ -1041,17 +1099,25 @@ async function renderCitiesWeather() {
 }
 
 async function renderHourlyCitiesWeather() {
-    for(const [index, city] of Cities.entries()) {
+    const weatherBlocks = document.querySelectorAll(".mini-weather-container")
+    for(let i = 1; i <= Cities.length; i++) {
+        const id = weatherBlocks[i-1].id;
+        const lastIdPart = id.split("-").pop();
+        let blockIndex = parseInt(lastIdPart, 10);
         (async function cityrender() {
             try {
-                const weatherContainer = document.getElementById(`weather-container-${index+1}`);
+                const weatherContainer = document.getElementById(`weather-container-${blockIndex}`);
+                weatherContainer.parentElement.classList.remove("hidden")
                 weatherContainer.classList.remove("hidden")
                 weatherContainer.classList.add("opacity")
-                const currentBtns = document.querySelectorAll(`.btn-${index+1}`)
+                weatherContainer.parentElement.classList.add("opacity")
+                weatherContainer.querySelector(".weather-1").classList.add("glowing-effect")
+                weatherContainer.querySelector(".weather-2").classList.add("glowing-effect")
+                const currentBtns = document.querySelectorAll(`.btn-${blockIndex}`)
                 currentBtns.forEach(currentBtn => {
-                    currentBtn.innerHTML = `<svg class="remove-svg" xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="#434343"><path d="M200-446.67v-66.66h560v66.66H200Z"/></svg>`
+                    currentBtn.innerHTML = `<svg class="btn-svg remove-svg" xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="#434343"><path d="M200-446.67v-66.66h560v66.66H200Z"/></svg>`
                 })
-                const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${city}&count=1&format=json`);
+                const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${Cities[i-1]}&count=1&format=json`);
                 const data = await res.json();
                 const cityInfoData = data.results[0];
                 let cityInfo = {
@@ -1062,16 +1128,18 @@ async function renderHourlyCitiesWeather() {
                 const data2 = await res2.json();
     
                 const icons = await fetchWeatherIcons(cityInfo.lat, cityInfo.long)
-                const svgIcons = icons.map((iconName, index1) => {
-                    const uniqueId = `grad-${index1}-${index+1}`;
+                const svgIcons = icons.map((iconName, index) => {
+                    const uniqueId = `grad-${index}-${blockIndex}`;
                     const allIcons = weatherSVGs(uniqueId); 
                     return allIcons[iconName] || allIcons["cloudy"];
                 });
-                cityHourlyWeather(index+1, svgIcons, data2)
+                cityHourlyWeather(blockIndex, svgIcons, data2)
                 searchInProcess = false;
                 currentBtns.forEach(currentBtn => {
-                    currentBtn.removeEventListener("click", addRemoveCity);
-                    currentBtn.addEventListener("click", addRemoveCity);
+                    if(!currentBtn.dataset.hasListener) {
+                        currentBtn.addEventListener("click", addRemoveCity);
+                        currentBtn.dataset.hasListener = "true";
+                    }
                 })
             } catch(err) {
                 console.log(`error ${err}`)
@@ -1081,17 +1149,22 @@ async function renderHourlyCitiesWeather() {
 }
 
 async function renderDailyCitiesWeather() {
-    for(const [index, city] of Cities.entries()) {
+    const weatherBlocks = document.querySelectorAll(".mini-weather-container")
+    for(let i = 1; i <= Cities.length; i++) {
+        const id = weatherBlocks[i-1].id;
+        const lastIdPart = id.split("-").pop();
+        let blockIndex = parseInt(lastIdPart, 10);
         (async function cityrender() {
             try {
-                const dailyWeatherContainer = document.getElementById(`daily-weather-${index+1}`);
+                const dailyWeatherContainer = document.getElementById(`daily-weather-${blockIndex}`);
                 dailyWeatherContainer.classList.remove("hidden")
                 dailyWeatherContainer.classList.add("opacity")
-                const currentBtns = document.querySelectorAll(`.btn-${index+1}`)
+                dailyWeatherContainer.classList.add("glowing-effect")
+                const currentBtns = document.querySelectorAll(`.btn-${blockIndex}`)
                 currentBtns.forEach(currentBtn => {
-                    currentBtn.innerHTML = `<svg class="remove-svg" xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="#434343"><path d="M200-446.67v-66.66h560v66.66H200Z"/></svg>`
+                    currentBtn.innerHTML = `<svg class="btn-svg remove-svg" xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="#434343"><path d="M200-446.67v-66.66h560v66.66H200Z"/></svg>`
                 })
-                const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${city}&count=1&format=json`);
+                const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${Cities[i-1]}&count=1&format=json`);
                 const data = await res.json();
                 const cityInfoData = data.results[0];
                 let cityInfo = {
@@ -1102,16 +1175,18 @@ async function renderDailyCitiesWeather() {
                 const data2 = await res2.json();
     
                 const icons = await fetchWeatherIcons(cityInfo.lat, cityInfo.long)
-                const svgIcons = icons.map((iconName, index1) => {
-                    const uniqueId = `grad-${index1}-${index+5}`;
+                const svgIcons = icons.map((iconName, index) => {
+                    const uniqueId = `grad-${index}-${index}-${blockIndex}`;
                     const allIcons = weatherSVGs(uniqueId); 
                     return allIcons[iconName] || allIcons["cloudy"];
                 });
-                cityDailyWeather(index+1, svgIcons, data2)
+                cityDailyWeather(blockIndex, svgIcons, data2)
                 searchInProcess = false;
                 currentBtns.forEach(currentBtn => {
-                    currentBtn.removeEventListener("click", addRemoveCity);
-                    currentBtn.addEventListener("click", addRemoveCity);
+                    if(!currentBtn.dataset.hasListener) {
+                        currentBtn.addEventListener("click", addRemoveCity);
+                        currentBtn.dataset.hasListener = "true";
+                    }
                 })
             } catch(err) {
                 console.log(`error ${err}`)
@@ -1121,21 +1196,33 @@ async function renderDailyCitiesWeather() {
 }
 
 function getIndexForButtons() {
-    Cities.forEach((city, index) => {
-        const currentBtns = document.querySelectorAll(`.btn-${index+1}`)
-        currentBtns.forEach(currentBtn => {
-            currentBtn.dataset.number = index+1;
-        })
-    })
+    const weatherBlocks = document.querySelectorAll(".mini-weather-container")
+    for(let i = 1; i <= weatherBlocks.length; i++) {
+        if(weatherBlocks[i-1].classList.contains("grid")) {
+            const id = weatherBlocks[i-1].id;
+            const lastIdPart = id.split("-").pop();
+            let blockIndex = parseInt(lastIdPart, 10)
+            const currentBtns = document.querySelectorAll(`.btn-${blockIndex}`)
+            currentBtns.forEach(currentBtn => {
+                currentBtn.dataset.number = blockIndex;
+            })
+        }
+    }
 }
 
 function getNamesForButtons() {
-    Cities.forEach((city, index) => {
-        const currentBtns = document.querySelectorAll(`.btn-${index+1}`)
-        currentBtns.forEach(currentBtn => {
-            currentBtn.dataset.cityName = city;
-        })
-    })
+    const weatherBlocks = document.querySelectorAll(".mini-weather-container")
+    for(let i = 1; i <= weatherBlocks.length; i++) {
+        if(weatherBlocks[i-1].classList.contains("grid")) {
+            const id = weatherBlocks[i-1].id;
+            const lastIdPart = id.split("-").pop();
+            let blockIndex = parseInt(lastIdPart, 10)
+            const currentBtns = document.querySelectorAll(`.btn-${blockIndex}`)
+            currentBtns.forEach(currentBtn => {
+                currentBtn.dataset.cityName = Cities[i-1];
+            })
+        }
+    }
 }
 
 function saveCities() {
@@ -1148,114 +1235,150 @@ function loadCities() {
     return JSON.parse(CitiesStorage) || [];
 }
 
-async function fetchDailyWatherKharkiv() {
-    const url = "https://api.open-meteo.com/v1/forecast?latitude=49.9808&longitude=36.2527&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=8";
-    try {
-        const res = await fetch(url);
-        const data = await res.json();
-        const icons = await fetchWeatherIcons(49.9808, 36.2527)
-        const svgIcons = icons.map((iconName, index) => {
-            const uniqueId = `grad-${index}-5`;
-            const allIcons = weatherSVGs(uniqueId); 
-            return allIcons[iconName] || allIcons["cloudy"];
-        });
-        cityDailyWeather(1, svgIcons, data)
-    }
-    catch(err) {
-        console.log(`error ${err}`)
-    }
-}
-
-function getCurrentIndex(collection) {
-    const index = collection.findIndex(slide => slide.classList.contains("displaySlide"));
-    return index !== -1 ? index : 0;
-}
+// Глобальный массив слайдеров для работы autoSwitchByElement
+const allSliders = [];
 
 function switchSlide(collection, state, i, targetIndex, dir, withAnim = true) {
     if (!collection || collection.length === 0) return;
 
-    const currentIndex = getCurrentIndex(collection);
-    const oldSlide = collection[currentIndex];
-    
-    oldSlide.classList.remove("displaySlide", "slideIn", "slideInB", "reverseSlideIn", "slideInNoOpacity", "reverseSlideInNoOpacity");
+    // Сбрасываем старый слайд, если переключение произошло быстро
+    const oldSlide = collection.find(el => el && el.classList.contains("displaySlide"));
+    if (oldSlide) {
+        if (typeof oldSlide._cancelWatchdog === 'function') oldSlide._cancelWatchdog();
+        oldSlide.classList.remove("displaySlide", "slideIn", "slideInB", "reverseSlideIn", "slideInNoOpacity", "reverseSlideInNoOpacity");
+    }
 
     state[i] = targetIndex;
-    const curr = collection[state[i]];
+    const curr = collection[targetIndex];
+    if (!curr) return;
 
+    if (typeof curr._cancelWatchdog === 'function') curr._cancelWatchdog();
     curr.classList.remove("slideIn", "slideInB", "reverseSlideIn", "slideInNoOpacity", "reverseSlideInNoOpacity");
 
     if (withAnim) {
-        void curr.offsetWidth;
-
-        let activeAnimationClass = "";
-        if (dir === "right") {
-            activeAnimationClass = curr.classList.contains("opacity") ? "slideInB" : "slideInNoOpacity";
-        } else {
-            activeAnimationClass = curr.classList.contains("opacity") ? "reverseSlideIn" : "reverseSlideInNoOpacity";
-        }
-
+        void curr.offsetWidth; 
+        let activeAnimationClass = (dir === "right") ? "slideInB" : "reverseSlideIn";
         curr.classList.add(activeAnimationClass);
-        const removeAnim = () => curr.classList.remove(activeAnimationClass);
-        curr.addEventListener('animationend', removeAnim, { once: true });
-        curr.addEventListener('animationcancel', removeAnim, { once: true });
+
+        let isRunning = true;
+
+        // 1. ЧИСТКА: общая функция для удаления классов и слушателей
+        const cleanup = () => {
+            isRunning = false;
+            curr.classList.remove(activeAnimationClass);
+            curr.removeEventListener('animationend', onAnimationEnd);
+            curr._cancelWatchdog = null;
+        };
+
+        // 2. ПЛАВНЫЙ ФИНИШ: когда пользователь никуда не уходил, анимация доигрывает сама до конца
+        const onAnimationEnd = () => {
+            if (isRunning) cleanup();
+        };
+
+        curr.addEventListener('animationend', onAnimationEnd);
+        curr._cancelWatchdog = cleanup;
+
+        // 3. СТОРОЖ (Watchdog): покадрово проверяет, жива ли еще секция
+        const watch = () => {
+            if (!isRunning) return;
+
+            const style = window.getComputedStyle(curr);
+            // Проверяем все популярные способы скрыть секцию: display:none, opacity:0 или visibility:hidden
+            const isHidden = curr.offsetParent === null || style.visibility === 'hidden' || style.opacity === '0';
+
+            if (isHidden) {
+                // Если пользователь ушел с секции — тупо сбриваем анимацию прямо посреди процесса
+                cleanup();
+                return;
+            }
+
+            requestAnimationFrame(watch);
+        };
+
+        requestAnimationFrame(watch);
     }
 
     curr.classList.add("displaySlide");
 }
 
 function weatherScroll(collection, state, i, dir) {
-    if (collection.length === 0) return;
+    if (!collection || collection.length === 0) return;
 
-    let nextIdx = state[i];
+    let currentIdx = collection.findIndex(el => el && el.classList.contains("displaySlide"));
+    if (currentIdx === -1) currentIdx = state[i];
+
+    let nextIdx = currentIdx;
+    let startIdx = nextIdx;
 
     do {
         nextIdx = (dir === "right")
             ? (nextIdx + 1) % collection.length
             : (nextIdx - 1 + collection.length) % collection.length;
-    } while (collection[nextIdx].classList.contains("hidden"));
+        if (nextIdx === startIdx) return; 
+    } while (!collection[nextIdx] || collection[nextIdx].classList.contains("hidden"));
 
     switchSlide(collection, state, i, nextIdx, dir, true);
 }
 
-const allSliders = [];
-
-function initMySlider(rightBtnId, leftBtnId, collections) {
-    const state = new Array(collections.length).fill(0);
+function initMySlider(rightBtnId, leftBtnId) {
+    const state = [0]; 
     const r_buttons = document.getElementById(rightBtnId);
     const l_buttons = document.getElementById(leftBtnId);
 
-    collections.forEach((col, i) => {
-        if (col.length > 0) {
-            col[0].classList.add("displaySlide");
-            state[i] = 0; 
+    // Локальный кэш коллекции элементов
+    let cachedCollection = [];
+
+    // Функция, которая обновляет кэш строго по требованию
+    function updateCache() {
+        cachedCollection = Array.from(document.querySelectorAll(".full-weather-container"));
+    }
+
+    // Первоначальное заполнение кэша при старте
+    updateCache();
+    if (cachedCollection.length > 0) {
+        cachedCollection[0].classList.add("displaySlide");
+    }
+
+    // КЛИК НАПРАВО: теперь просто используем готовый кэш
+    r_buttons?.addEventListener("click", () => {
+        if (Cities.length > 0) {
+            weatherScroll(cachedCollection, state, 0, "right");
         }
     });
 
-    r_buttons?.addEventListener("click", () => {
-        collections.forEach((col, i) => weatherScroll(col, state, i, "right"));
-    });
-    
+    // КЛИК НАЛЕВО: используем готовый кэш
     l_buttons?.addEventListener("click", () => {
-        collections.forEach((col, i) => weatherScroll(col, state, i, "left"));
+        if (Cities.length > 0) {
+            weatherScroll(cachedCollection, state, 0, "left");
+        }
     });
 
     const sliderInstance = {
-        collections: collections,
         state: state,
-        switchTo: function(targetElement) {
-            let targetIndex = -1;
 
-            for (let j = 0; j < this.collections.length; j++) {
-                targetIndex = this.collections[j].findIndex(slide => slide === targetElement);
-                if (targetIndex !== -1) {
-                    break;
-                }
+        // Метод для принудительного обновления кэша извне (например, если удалили слайд)
+        refresh: function() {
+            updateCache();
+        },
+
+        // addSlide обновляет кэш СРАЗУ после добавления элемента
+        addSlide: function(collectionIndex, newElement) {
+            // Предполагается, что newElement уже вставлен в DOM к этому моменту.
+            // Обновляем наш массив элементов актуальными данными из DOM
+            updateCache(); 
+            
+            const hasVisible = cachedCollection.some(el => el && el.classList.contains("displaySlide"));
+            if (!hasVisible && !newElement.classList.contains("hidden")) {
+                newElement.classList.add("displaySlide");
             }
+        },
+        
+        // switchTo использует уже готовый кэш
+        switchTo: function(targetElement) {
+            const targetIndex = cachedCollection.indexOf(targetElement);
 
             if (targetIndex !== -1) {
-                this.collections.forEach((col, i) => {
-                    switchSlide(col, this.state, i, targetIndex, "right", false);
-                });
+                switchSlide(cachedCollection, this.state, 0, targetIndex, "right", false);
                 return true;
             }
             return false;
@@ -1273,40 +1396,315 @@ function autoSwitchByElement(targetElement) {
     }
 }
 
-document.addEventListener("DOMContentLoaded", ()=> {
-    loadCities();
-    getIndexForButtons();
-    getNamesForButtons();
+// ACTION BAR BUTTONS
+
+function addButtonsToggleFunction() {
+    if(Cities.length < 4 && !addingBlockFromSearch && !addingBlockFromButton) {
+        addButton? addButton = false : addButton = true;
+        addButonBlock.classList.toggle("hidden")
+        let i = getIndex();
+        const fullWeatherContainer = document.querySelector(`#full-weather-container-${i}`)
+        const fullWeatherContainers = document.querySelectorAll(".full-weather-container")
+        if(!addButton) {
+            fullWeatherContainer.classList.remove("block-container", "opacity")
+            fullWeatherContainer.querySelector(".add-city-button-block-1").classList.remove("grid")
+            fullWeatherContainer.classList.add("hidden")
+            autoSwitchByElement(document.querySelector(`#full-weather-container-${Cities.length}`))
+        } else {
+            fullWeatherContainer.classList.add("block-container", "opacity")
+            fullWeatherContainer.querySelector(".weather-container").classList.add("hidden")
+            fullWeatherContainer.querySelector(".eight-days-weather").classList.add("hidden")
+            fullWeatherContainer.querySelector(".weather-h1").classList.add("hidden")
+            fullWeatherContainer.querySelector(".add-city-button-block-1").classList.add("grid")
+            fullWeatherContainer.classList.remove("hidden")
+            autoSwitchByElement(fullWeatherContainers[0])
+            addEventListenerForAddButton()
+        }
+        saveAddButtonState();
+        renderSliderButtons();
+    } else {
+        addButton? addButton = false : addButton = true;
+    }
+}
+
+function showAddButtonBlock() {
+    let i = getIndex();
+    const fullWeatherContainer = document.querySelector(`#full-weather-container-${i}`)
+    addButonBlock.classList.remove("hidden")
+    fullWeatherContainer.classList.add("block-container", "opacity")
+    fullWeatherContainer.querySelector(".add-city-button-block-1").classList.add("grid")
+    fullWeatherContainer.classList.remove("hidden")
+}
+
+function hideAddButtonBlock() {
+    let i = getIndex();
+    const fullWeatherContainer = document.querySelector(`#full-weather-container-${i}`)
+    addButonBlock.classList.add("hidden")
+    fullWeatherContainer.classList.remove("block-container", "opacity")
+    fullWeatherContainer.querySelector(".add-city-button-block-1").classList.remove("grid")
+    fullWeatherContainer.classList.add("hidden")
+}
+
+function resetAllCities() {
+    let number;
+    const weatherBlocks = document.querySelectorAll(".mini-weather-container")
+    for(let i = 1; i <= Cities.length; i++) {
+        const id = weatherBlocks[i-1].id;
+        const lastIdPart = id.split("-").pop();
+        number = parseInt(lastIdPart, 10)
+        let btns = document.querySelectorAll(`.btn-${number}`);
+        clearCityWeather(number);
+        clearCityHourlyWeather(number);
+        clearCityDailyWeather(number)
+        btns.forEach(btn => {
+            btn.closest(".mini-weather-container")?.classList.remove("grid", "opacity", "glowing-effect")
+            btn.closest(".weather")?.classList.remove("grid")
+            btn.closest(".full-weather-container")?.classList.add("hidden")
+            btn.closest(".full-weather-container")?.classList.remove("opacity")
+            btn.closest(".full-weather-container")?.querySelector(".eight-days-weather").classList.remove("glowing-effect")
+            btn.closest(".full-weather-container")?.querySelector(".weather-1").classList.remove("glowing-effect")
+            btn.closest(".full-weather-container")?.querySelector(".weather-2").classList.remove("glowing-effect")
+            btn.innerHTML = `<svg class="btn-svg" xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="#434343"><path d="M446.67-446.67H200v-66.66h246.67V-760h66.66v246.67H760v66.66H513.33V-200h-66.66v-246.67Z"/></svg>`
+            delete btn.dataset.cityName;
+        })
+    }
+    showButtonH1();
+    hideAddButton();
+    const fullWeatherContainers = document.querySelectorAll(".full-weather-container")
+    autoSwitchByElement(fullWeatherContainers[0])
+    Cities.length = 0;
+    if(addButton) {
+        renderAddButton();
+        renderAddButton1();
+    }
+    addEventListenerForAddButton()
+    hideSliderButtons();
+    saveCities();
+    addButonBlockTop();
+    correctAddButtonsPosition();
+    weatherBackgroundEasyModeUpdate()
+}
+
+function reloadAllCities() {
+    const weatherBlocks = document.querySelectorAll(".mini-weather-container")
+    for(let i = 1; i <= Cities.length; i++) {
+        const id = weatherBlocks[i-1].id;
+        const lastIdPart = id.split("-").pop();
+        number = parseInt(lastIdPart, 10)
+        clearCityWeather(number);
+        clearCityHourlyWeather(number);
+        clearCityDailyWeather(number)
+    }
     renderCitiesWeather();
     renderHourlyCitiesWeather();
     renderDailyCitiesWeather();
+}
+
+function saveAddButtonState() {
+    localStorage.setItem("AddButton", String(addButton))
+}
+
+function loadAddButtonState() {
+    const addButtonState = localStorage.getItem("AddButton");
+    if (addButtonState === null) {
+        return true;
+    }
+    return addButtonState === "true";
+}
+
+function initAddButtonBlock() {
+    if(Cities.length < 4) {
+        if(!addButton) {
+            hideAddButtonBlock();
+        } else {
+            showAddButtonBlock();
+        }
+    }
+}
+
+function correctAddButtonsPosition() {
+    const addButtons = document.querySelectorAll(".add-city-button-block-1")
+    if(Cities.length > 0 || addingBlockFromButton || addingBlockFromSearch) {
+        addButtons.forEach(el => el.classList.add("top"))
+        weatherBackground.classList.add("padding-top")
+        weatherProject2.classList.add("min-height")
+    }
+    else {
+        addButtons.forEach(el => el.classList.remove("top"))
+        weatherBackground.classList.remove("padding-top")
+        weatherProject2.classList.remove("min-height")
+    }
+}
+
+function weatherBackgroundEasyModeUpdate() {
+    weatherProject.classList.remove("zero-weather-blocks", "one-weather-blocks", "two-weather-blocks", "three_and_more-weather-blocks")
+    if(Cities.length === 0) {
+        weatherProject.classList.add("zero-weather-blocks")
+    }
+    else if(Cities.length === 1) {
+        weatherProject.classList.add("one-weather-blocks")
+    }
+    else if(Cities.length === 2) {
+        weatherProject.classList.add("two-weather-blocks")
+    }
+    else {
+        weatherProject.classList.add("three_and_more-weather-blocks")
+    }
+}
+
+function renderCard(type, id) {
+    const targetTemplate = templates[type]
+    const specialId = getLastIndex();
+    const previousWeatherBlock = document.querySelector(`#weather-${specialId}`)
+    const previousWeatherContainer = document.querySelector(`#full-weather-container-${specialId}`)
+    const fragment = document.importNode(targetTemplate.content, true)
+    const card = fragment.querySelector(".weather")
+    const advancedCard = fragment.querySelector(".full-weather-container")
+
+    if(type === 'easy') {
+        card.id = `weather-${id}`
+        // weather-1
+        card.querySelector(".weather-h1").classList.add(`h1-${id}`)
+        card.querySelector(".weather-h1").id = `h1-${id}`
+        card.querySelector(".mini-weather-container").id = `mini-weather-container-${id}`
+        card.querySelector(".cancel-btn").classList.add(`c-btn-${id}`)
+        card.querySelector(".add-btn").classList.add(`btn-${id}`)
+        card.querySelector(".weather-details-1").classList.add(`wd-${id}`)
+        card.querySelector(".current-time").classList.add(`current-time-${id}`)
+        card.querySelector(".temp-rn-p").classList.add(`temp-rn-p-${id}`)
+        card.querySelector(".about-rn").classList.add(`about-rn-${id}`)
+        card.querySelector(".about-feels").classList.add(`about-feels-${id}`)
+        card.querySelector(".wind-field").classList.add(`wind-${id}`)
+        card.querySelector(".humidity-field").classList.add(`humidity-${id}`)
+        card.querySelector(".visibility-field").classList.add(`visibility-${id}`)
+        card.querySelector(".pressure-field").classList.add(`pressure-${id}`)
+        card.querySelector(".uv-field").classList.add(`uv-${id}`)
+        card.querySelector(".dp-field").classList.add(`dp-${id}`)
+        previousWeatherBlock.after(fragment)
+    } else {
+        advancedCard.id = `full-weather-container-${id}`
+        advancedCard.querySelector(".weather-h1").classList.add(`h1-${id}`)
+        // weather-1
+        advancedCard.querySelector(".weather-container").id = `weather-container-${id}`
+        advancedCard.querySelector(".weather-1").querySelector(".cancel-btn").classList.add(`c-btn-${id}`, `mobile-cancel-btn`)
+        advancedCard.querySelector(".weather-1").querySelector(".add-btn").classList.add(`btn-${id}`, `mobile-cancel-btn`)
+        advancedCard.querySelector(".weather-details-1").classList.add(`wd-${id}`)
+        advancedCard.querySelector(".current-time").classList.add(`current-time-${id}`)
+        advancedCard.querySelector(".temp-rn-p").classList.add(`temp-rn-p-${id}`)
+        advancedCard.querySelector(".about-rn").classList.add(`about-rn-${id}`)
+        advancedCard.querySelector(".about-feels").classList.add(`about-feels-${id}`)
+        advancedCard.querySelector(".wind-field").classList.add(`wind-${id}`)
+        advancedCard.querySelector(".humidity-field").classList.add(`humidity-${id}`)
+        advancedCard.querySelector(".visibility-field").classList.add(`visibility-${id}`)
+        advancedCard.querySelector(".pressure-field").classList.add(`pressure-${id}`)
+        advancedCard.querySelector(".uv-field").classList.add(`uv-${id}`)
+        advancedCard.querySelector(".dp-field").classList.add(`dp-${id}`)
+        // weather-2
+        advancedCard.querySelector(".weather-2").querySelector(".cancel-btn").classList.add(`c-btn-${id}`, `desktop-cancel-btn`)
+        advancedCard.querySelector(".weather-2").querySelector(".add-btn").classList.add(`btn-${id}`, `desktop-cancel-btn`)
+        const hourlyWeatherBlocks = advancedCard.querySelectorAll(".hourly-weather")
+        hourlyWeatherBlocks.forEach((hourlyElement, index) => {
+            let hourlyNumber = index + 1;
+            hourlyElement.classList.add(`hour-${hourlyNumber}-${id}`)
+        })
+        advancedCard.querySelector(".eight-days-weather").id = `daily-weather-${id}`
+        const dailyWeatherBlocks = advancedCard.querySelectorAll(".daily-weather")
+        dailyWeatherBlocks.forEach((dailyElement, index) => {
+            let dailyNumber = index + 1;
+            dailyElement.classList.add(`day-${dailyNumber}-${id}`)
+        })
+        previousWeatherContainer.after(fragment)
+        weatherSlider.addSlide(0, document.querySelector(`#full-weather-container-${id}`));
+        weatherSlider1.addSlide(0, document.querySelector(`#full-weather-container-${id}`));
+        currentBtns = document.querySelectorAll(`.btn-${id}`)
+    }
+}
+
+function renderCards(id) {
+    renderCard('easy', id);
+    renderCard('advanced', id);
+}
+
+function getIndex() {
+    let blockIndex;
+    const weatherBlocks = document.querySelectorAll(".mini-weather-container")
+    for(let i = 1; i <= weatherBlocks.length; i++) {
+        if(!weatherBlocks[i-1].classList.contains("grid")) {
+            const id = weatherBlocks[i-1].id;
+            const lastIdPart = id.split("-").pop();
+            blockIndex = parseInt(lastIdPart, 10)
+            break;
+        }
+    }
+    return blockIndex;
+}
+
+function getLastIndex() {
+    let blockIndex;
+    const weatherBlocks = document.querySelectorAll(".full-weather-container")
+    const id = weatherBlocks[weatherBlocks.length-1].id;
+    const lastIdPart = id.split("-").pop();
+    blockIndex = parseInt(lastIdPart, 10)
+    return blockIndex;
+}
+
+document.addEventListener("DOMContentLoaded", ()=> {
+    loadCities();
+    addButonBlockTop();
+    renderCitiesWeather();
+    renderHourlyCitiesWeather();
+    renderDailyCitiesWeather();
+    getIndexForButtons();
+    getNamesForButtons();
     renderAddButton1();
-    renderAddButton(weatherBlocks2);
-    renderAddButton(weatherBlocks3);
+    renderAddButton();
+    initAddButtonBlock()
     renderSliderButtons();
-    initMySlider("w-arrow1", "w-arrow2", slides1);
-    initMySlider("w-arrow3", "w-arrow4", slides2);
-    addEventListenerForAddButton(weatherBlocks2);
-    addEventListenerForAddButton(weatherBlocks3);
+    weatherSlider = initMySlider("w-arrow1", "w-arrow2", slides1);
+    weatherSlider1 = initMySlider("w-arrow3", "w-arrow4", slides1);
+    addEventListenerForAddButton();
+    correctAddButtonsPosition()
+    weatherBackgroundEasyModeUpdate()
 
     searchInput.addEventListener("input", ()=> {
+        currentSearchId++;
+        const activeRequestId = currentSearchId;
         if(searchInput.value.length > 0) {
             clearTimeout(timeout)
             timeout = setTimeout(()=> {
-                searchForCity(searchInput);
+                searchForCity(searchInput, activeRequestId);
             }, 500)
+        } else {
+            deleteNewWeatherBlock();
+            correctAddButtonsPosition()
+            renderSliderButtons();
         }
-        else {
-            if(!Cities.includes(cityInfo.name)) {
-                deleteNewWeatherBlock();
+        if(addingBlockFromSearch && !searchingWeatherBlocksCleared) {
+            if(addButton) {
                 renderAddButton1();
-                renderSliderButtons();
             }
+            else {
+                for(let i = 0; i <= 3; i++) {
+                    if(fullWeatherContainers[i].classList.contains("opacity")) {
+                        autoSwitchByElement(fullWeatherContainers[i])
+                        break;
+                    }
+                }
+            }
+            deleteNewWeatherBlock();
+            correctAddButtonsPosition()
+            renderSliderButtons();
         }
     })
     addCityButton.addEventListener("click", ()=> {
-        findTheWeatherBlockButton(weatherBlocks2);
-        findTheWeatherBlockButton(weatherBlocks3);
+        findTheWeatherBlockButton();
         findTheWeatherBlockButton1();
+        correctAddButtonsPosition();
     })
+    // ACTION BAR EVENT LISTENERS
+    addButtonsToggle.forEach(el => el.addEventListener("click", addButtonsToggleFunction))
+    reloadButtons.forEach(el => el.addEventListener("click", reloadAllCities))
+    setTimeout(() => {
+        resetButtons.forEach(el => el.addEventListener("click", resetAllCities))
+    }, 1500);
 })
