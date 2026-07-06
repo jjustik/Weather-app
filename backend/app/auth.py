@@ -14,7 +14,7 @@ from pwdlib import PasswordHash
 from dotenv import load_dotenv
 from email_validator import validate_email, EmailNotValidError
 
-from app.models.models import User as UserModel
+from app.models.user import User as UserModel
 from app.schemas.users import UserCreate, User
 from app.db import get_async_session
 
