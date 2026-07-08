@@ -1,8 +1,10 @@
 import uuid
 from datetime import timedelta
 from typing import Annotated
+import jwt
+from jwt.exceptions import InvalidTokenError
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status, Response
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,13 +17,15 @@ from app.auth import (
     hash_password, 
     authenticate_user, 
     create_access_token, 
-    ACCESS_TOKEN_EXPIRE_MINUTES, 
-    is_email
+    is_email,
+    create_refresh_token,
+    token_hash
 )
 from app.schemas.users import (
     ForgotPasswordRequest, 
     ResetPasswordRequest, 
-    UserCreate
+    UserCreate,
+    StatusResponse
 )
 from app.utils.email import send_reset_email 
 
@@ -70,8 +74,13 @@ async def register_user(
     await session.commit()
     await session.refresh(new_user)
 
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
     access_token = create_access_token(data={"sub": str(new_user.id)}, expires_delta=access_token_expires)
+
+    refresh_token = create_refresh_token(data={"sub": str(new_user.id)})
+    
+    new_user.refresh_token_hash = token_hash(refresh_token)
+    await session.commit()
 
     response.set_cookie(
         key="access_token",
@@ -79,7 +88,18 @@ async def register_user(
         httponly=True,
         secure=False,
         samesite="lax",
-        max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        max_age=settings.access_token_expire_minutes * 60,
+        path="/"
+    )
+    
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=False,
+        samesite="lax",
+        max_age=settings.refresh_token_expire_days * 24 * 60 * 60,
+        path="/auth/refresh"
     )
 
     return {
@@ -106,8 +126,13 @@ async def login_user(
             headers={"WWW-Authenticate": "Bearer"}
         )
         
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
     access_token = create_access_token(data={"sub": str(user.id)}, expires_delta=access_token_expires)
+    
+    refresh_token = create_refresh_token(data={"sub": str(user.id)})
+
+    user.refresh_token_hash = token_hash(refresh_token)
+    await session.commit()
 
     response.set_cookie(
         key="access_token",
@@ -115,7 +140,18 @@ async def login_user(
         httponly=True,
         secure=False,   
         samesite="lax",
-        max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        max_age=settings.access_token_expire_minutes * 60,
+        path="/"
+    )
+    
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=False,
+        samesite="lax",
+        max_age=settings.refresh_token_expire_days * 24 * 60 * 60,
+        path="/auth/refresh"
     )
     
     return {"Message": "Logged in"}
@@ -177,3 +213,52 @@ async def reset_password(
     await redis_cl.delete(redis_key)
     
     return {"message": "Password updated successfully"}
+
+
+@router.post("/refresh", response_model=StatusResponse)
+async def refresh_tokens(
+    request: Request,
+    response: Response,
+    session: Annotated[AsyncSession, Depends(get_async_session)]
+):
+    refresh_token = request.cookies.get("refresh_token")
+    if not refresh_token:
+        raise HTTPException(status_code=401, detail="Refresh token missing")
+        
+    try:
+        payload = jwt.decode(refresh_token, settings.refresh_secret_key, algorithms=[settings.algorithm])
+        user_id_str = payload.get("sub")
+        if user_id_str is None:
+            raise HTTPException(status_code=401, detail="Invalid token payload")
+        user_id = uuid.UUID(user_id_str)
+    except (InvalidTokenError, ValueError):
+        raise HTTPException(status_code=401, detail="Refresh token expired or invalid")
+        
+    result = await session.execute(select(UserModel).where(UserModel.id == user_id))
+    user = result.scalar_one_or_none()
+    
+    if not user or not user.refresh_token_hash:
+        raise HTTPException(status_code=401, detail="Session not found")
+        
+    if user.refresh_token_hash != token_hash(refresh_token):
+        user.refresh_token_hash = None
+        await session.commit()
+        raise HTTPException(status_code=401, detail="Token compromise detected. Please re-login.")
+        
+    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
+    new_access_token = create_access_token(data={"sub": str(user.id)}, expires_delta=access_token_expires)
+    new_refresh_token = create_refresh_token(data={"sub": str(user.id)})
+    
+    user.refresh_token_hash = token_hash(new_refresh_token)
+    await session.commit()
+    
+    response.set_cookie(
+        key="access_token", value=new_access_token, httponly=True, secure=False, samesite="lax",
+        max_age=settings.access_token_expire_minutes * 60, path="/"
+    )
+    response.set_cookie(
+        key="refresh_token", value=new_refresh_token, httponly=True, secure=False, samesite="lax",
+        max_age=settings.refresh_token_expire_days * 24 * 60 * 60, path="/auth/refresh"
+    )
+    
+    return StatusResponse(status="success", message="Tokens successfully refreshed")

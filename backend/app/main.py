@@ -13,7 +13,6 @@ MEDIA_DIR = Path("media")
 async def lifespan(app: FastAPI):
     MEDIA_DIR.mkdir(parents=True, exist_ok=True)
     (MEDIA_DIR / "avatars").mkdir(parents=True, exist_ok=True)
-    
     await create_db_and_tables()
     yield
 
