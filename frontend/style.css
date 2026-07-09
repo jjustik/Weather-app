@@ -2525,6 +2525,9 @@ nav a span {
         margin-top: 3em;
         margin-bottom: 3em;
     }
+    .small-cancel-btn {
+        top: -0.35em;
+    }
     .mini-weather-container, .weather {
         height: 15em;
     }
@@ -2628,6 +2631,9 @@ nav a span {
     .profile-main {
         height: 100%;
         top: -4svh;
+    }
+    .small-cancel-btn {
+        top: -0.1em;
     }
     .full-weather-container {
         min-width: 80%;
