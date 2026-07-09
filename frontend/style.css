@@ -870,7 +870,7 @@ nav a span {
 .eight-days-weather {
     position: relative;
     display: block;
-    padding: 0.7em 1em 0.7em;
+    padding: 0.7em 1em 0;
     border-radius: 0.8em;
     opacity: 0.8;
     outline: 4px solid var(--accent-color-2);
@@ -1610,6 +1610,10 @@ nav a span {
 
 .weather-project, .weather-project-2 {
     top: 12.4vh;
+}
+
+.weather-project-2 {
+    top: 10.4vh;
 }
 
 .search-bar {
@@ -2491,7 +2495,7 @@ nav a span {
     }
 }
 
-@media (pointer: coarse) {
+@media (any-pointer: coarse) {
     .eight-days-weather {
         padding: 0.7em 1em;
     }
@@ -3111,6 +3115,12 @@ nav a span {
 @media (min-height: 850px) {
     footer.margin-top {
         margin-top: 0;
+    }
+}
+
+@media (min-height: 650px) {
+    .weather-project-2 {
+        top: 12.4vh;
     }
 }
 
