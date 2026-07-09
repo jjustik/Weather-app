@@ -874,6 +874,7 @@ nav a span {
     border-radius: 0.8em;
     opacity: 0.8;
     outline: 4px solid var(--accent-color-2);
+    min-height: 6.6em;
     max-width: min(60vw, 56.5em);
     margin: 3em auto 2em;
     background: var(--container-linear);
