@@ -365,15 +365,15 @@ function dayOfTheWeek(data) {
 }
 
 // ---------------FRONTEND TO BACKEND---------------------
-async function registration() {
-    const response = await fetch(`${BASE_URL}/registration`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: signUpUserInput.value.trim(), password: signUpPassInput.value.trim() })
-    });
-    const data = response.json();
-    console.log(data)
-}
+// async function registration() {
+//     const response = await fetch(`${BASE_URL}/registration`, {
+//         method: 'POST',
+//         headers: { 'Content-Type': 'application/json' },
+//         body: JSON.stringify({ email: signUpUserInput.value.trim(), password: signUpPassInput.value.trim() })
+//     });
+//     const data = await response.json();
+//     console.log(data)
+// }
 
 // for(let i = 1; i <= 4; i++) {
 //     activeHandlers.push({
@@ -507,7 +507,7 @@ function renderSliderButtons() {
 
 async function buttonFetchWeatherNew(id) {
     try {
-        const res = await fetch(`/api/get-weather?city=${cityInfo.name}`);
+        const res = await fetch(`${BASE_URL}/weather/api/get-weather?city=${cityInfo.name}`);
         const res2 = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${cityInfo.lat}&longitude=${cityInfo.long}&current_weather=true&hourly=dewpoint_2m,uv_index&timezone=auto`);
         const data = await res.json();
         const data2 = await res2.json();
@@ -801,7 +801,7 @@ function addEventListenerForAddButton() {
 
 async function fetchWeatherNew(requestId) {
     try {
-        const res = await fetch(`/api/get-weather?city=${cityInfo.name}`);
+        const res = await fetch(`${BASE_URL}/weather/api/get-weather?city=${cityInfo.name}`);
         const res2 = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${cityInfo.lat}&longitude=${cityInfo.long}&current_weather=true&hourly=dewpoint_2m,uv_index&timezone=auto`);
         const data = await res.json();
         const data2 = await res2.json();
@@ -1071,7 +1071,7 @@ async function renderCitiesWeather() {
                 currentBtns.forEach(currentBtn => {
                     currentBtn.innerHTML = `<svg class="btn-svg remove-svg" xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="#434343"><path d="M200-446.67v-66.66h560v66.66H200Z"/></svg>`
                 })
-                const res = await fetch(`/api/get-weather?city=${Cities[i-1]}`);
+                const res = await fetch(`${BASE_URL}/weather/api/get-weather?city=${Cities[i-1]}`);
                 const res2 = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${Cities[i-1]}&count=1&format=json`)
                 const data = await res.json();
                 const data2 = await res2.json();

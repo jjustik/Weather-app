@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 
 :root {
-    --start-input-width: 2em;
+    --start-input-width: 9em;
     --final-input-width: 9em;
 }
 
@@ -23,6 +23,8 @@
     --glowing-border-color: rgb(14, 0, 76);
     --text-color: rgb(234, 234, 234);
     --text-color-2: black;
+    --text-color-3: rgb(234, 234, 234);
+    --nav-special-btns-color: black;
     --text-color-hover: white;
     --input-focus-color: rgb(0, 59, 89);
     --basic-font: Poppins, "Segoe Ui", sans-serif;
@@ -55,6 +57,8 @@
     --reset-button: rgb(226, 0, 0);
     --theme-list-color: rgb(233, 233, 233);
     --theme-list-outline-color: #fff;
+    --input-submit-btn-color: #ececec;
+    --toast-success-bg-color: rgb(69, 209, 69);
     --weather-bg-image: url("images/white-bg.png")
 }
 
@@ -76,6 +80,8 @@
     --glowing-border-color: rgb(0, 0, 0);
     --text-color: rgb(27, 27, 27);
     --text-color-2: rgb(147, 147, 147);
+    --text-color-3: rgb(147, 147, 147);
+    --nav-special-btns-color: rgb(147, 147, 147);
     --text-color-hover: rgb(0, 0, 0);
     --input-focus-color: rgb(66, 66, 66);
     --basic-font: Poppins, "Segoe Ui", sans-serif;
@@ -108,6 +114,8 @@
     --reset-button: rgb(161, 0, 0);
     --theme-list-color: #939393;
     --theme-list-outline-color: #a0a0a0;
+    --input-submit-btn-color: #2f2f2f;
+    --toast-success-bg-color: rgb(47 111 47);
     --weather-bg-image: url("images/gray-bg.png")
 }
 
@@ -128,7 +136,9 @@
     --accent-color-3: rgb(201, 87, 0);
     --glowing-border-color: rgb(0, 0, 0);
     --text-color: rgb(27, 27, 27);
-    --text-color-2: rgb(57, 57, 57);
+    --text-color-2: rgb(147, 147, 147);
+    --text-color-3: rgb(147, 147, 147);
+    --nav-special-btns-color: rgb(57, 57, 57);
     --text-color-hover: rgb(0, 0, 0);
     --input-focus-color: rgb(84, 38, 0);
     --basic-font: Poppins, "Segoe Ui", sans-serif;
@@ -159,6 +169,8 @@
     --reset-button: rgb(205, 0, 0);
     --theme-list-color: #939393;
     --theme-list-outline-color: #a0a0a0;
+    --input-submit-btn-color: #2f2f2f;
+    --toast-success-bg-color: rgb(47 111 47);
     --weather-bg-image: url("images/gray-bg.png")
 }
 
@@ -320,7 +332,6 @@ main {
     height: 100%;
     display: flex;
     justify-content: center;
-    /* align-items: center; */
 }
 
 footer {
@@ -358,7 +369,7 @@ nav li {
     text-decoration: none;
     border-radius: 0;
     background: rgb(170, 255, 0);
-    color: var(--text-color-2);
+    color: var(--nav-special-btns-color);
     font-family: var(--basic-font);
     outline: 3.5px solid var(--mini-container-color);
     cursor: pointer;
@@ -709,6 +720,7 @@ nav a span {
 .profile-li {
     position: relative;
     width: 4.8em;
+    min-width: 4.6em;
     height: 2.15em;
     font-size: 15px;
     text-decoration: none;
@@ -729,7 +741,7 @@ nav a span {
     position: relative;
     font-family: var(--basic-font);
     right: -0.7em;
-    color: var(--text-color-2);
+    color: var(--nav-special-btns-color);
     transition: color 0.3s;
 }
 
@@ -1776,16 +1788,17 @@ nav a span {
 
 .profile-main, .login-main {
     flex-direction: column;
-    align-items: center;
 }
 
 .profile-main {
     top: 0.1svh;
+    align-items: center;
     justify-content: end;
 }
 
 .login-main {
     top: 2svh;
+    align-items: center;
     padding: 1em;
 }
 
@@ -1887,12 +1900,6 @@ nav a span {
     width: 20em;
     height: 20em;
     border-radius: 25%
-}
-
-.login-main h2 {
-    text-align: center;
-    margin-top: 1em;
-    color: var(--profile-username-color);
 }
 
 .avatar-container {
@@ -2052,10 +2059,6 @@ nav a span {
 
 /* LOGIN PAGE */
 
-#login-body {
-    background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url("images/login-background.jpg") center / cover no-repeat fixed;
-}
-
 .switch-auth-mode-btn {
     color: var(--text-color);
     font-size: 0.9em;
@@ -2072,10 +2075,14 @@ nav a span {
 }
 
 .auth-wrapper {
+    position: relative;
+    top: -50%;
+    transform: translateY(45%);
     width: 100%;
+    height: 100%;
     display: none;
     justify-content: center;
-    align-items: center;
+    align-items: end;
 }
 
 .auth-box {
@@ -2110,7 +2117,7 @@ nav a span {
 
 .auth-header span {
     font-size: 30px;
-    color: black;
+    color: var(--text-color-2);
 }
 
 .auth-header::before {
@@ -2141,7 +2148,15 @@ nav a span {
     position: relative;
     display: flex;
     flex-direction: column;
-    margin: 20px 0;
+    margin: 30px 0 20px 0;
+}
+
+.user-input-box {
+    margin: 10px 0 25px 0;
+}
+
+.pass-input-box {
+    margin: 25px 0 3px 0;
 }
 
 .input-field {
@@ -2161,10 +2176,12 @@ nav a span {
 }
 
 .label {
+    color: var(--text-color-3);
     position: absolute;
     top: 15px;
     left: 20px;
     transition: 0.2s;
+    cursor: text;
 }
 
 .input-field:focus ~ .label, .input-field:valid ~ .label {
@@ -2174,7 +2191,7 @@ nav a span {
     font-size: 14px;
     background-color: var(--text-color);
     border-radius: 30px;
-    color: black;
+    color: var(--text-color-2);
     padding: 0 10px;
 }
 
@@ -2188,16 +2205,75 @@ nav a span {
     font-size: 20px;
 }
 
-.lock-icon {
-    top: 13px;
-    width: 30px;
-    height: 30px;
+.visibility-icon {
+    cursor: pointer;
+}
+
+.pass-visibility-btn {
+    display: none;
+    border: 0;
+    outline: 0;
+}
+
+.input-field::-ms-reveal,
+.input-field::-ms-clear {
+    display: none;
+}
+
+.forgot-password-container {
+    margin: 10px 0 0 0;
+    display: flex;
+    justify-content: end;
+}
+
+.forgot-password-a {
+    position: relative;
+    height: fit-content;
+    color: var(--text-color-3);
+}
+
+.password-requirements {
+    position: relative;
+    left: 4%;
+}
+
+.password-requirements-p {
+    font-size: 15px;
+}
+
+.password-requirements-p.not-checked {
+    color: #D32F2F;
+}
+
+.password-requirements-p.checked {
+    color: rgb(26, 210, 26);
+}
+
+.auth-error-message {
+    display: none;
+    position: absolute;
+    left: 12%;
+    font-size: 15px;
+    color: #e82525;
+}
+
+.empty-username-error, .server-error, .empty-fields-error {
+    top: 19%;
+}
+
+#signup-error-message {
+    top: 19%;
+}
+
+#login-error-message {
+    top: 61%;
 }
 
 .input-submit {
+    color: var(--text-color-2);
     width: 100%;
     height: 50px;
-    background: #ececec;
+    background: var(--input-submit-btn-color);
     font-size: 1em;
     font-weight: 500;
     border: 0;
@@ -2212,6 +2288,58 @@ nav a span {
 
 .switch-auth-mode {
     text-align: center;
+}
+
+.toast-container {
+    position: fixed;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: var(--text-color-3);
+    border-radius: 0.9em;
+    padding: 0.5em;
+    height: 5em;
+    min-width: 17em;
+    bottom: 3em;
+    animation: toast 6s ease-in-out forwards;
+}
+
+.toast {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5em;
+    height: 100%;
+    width: 100%;
+    border-radius: 0.7em;
+    background: var(--toast-success-bg-color);
+}
+
+.toast-2 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border-radius: 0.6em;
+    background: var(--toast-success-bg-color);
+}
+
+.toast-text {
+    margin-right: 0.9em;
+    color: var(--text-color-3);
+}
+
+@keyframes toast {
+    0% {
+        right: -20em;
+    }
+    13%, 87% {
+        right: 1em;
+    }
+    100% {
+        right: -20em;
+    }
 }
 
 .settings-button {
@@ -2230,10 +2358,6 @@ nav a span {
     z-index: 2;
 }
 
-/* .settings-button:hover {
-    background: var(--add-button-2);
-} */
-
 .settings-button:hover {
     background: var(--container-color-hover);
 }
@@ -2244,8 +2368,6 @@ nav a span {
     top: 0.07px;
     width: 30px;
     height: 30px;
-    /* width: 22.68px;
-    height: 22.68px; */
     transition: transform 0.3s ease;
 }
 
@@ -2498,6 +2620,10 @@ nav a span {
 @media (max-width: 810px) {
     main {
         height: unset;
+    }
+    .profile-main {
+        height: 100%;
+        top: -4svh;
     }
     .full-weather-container {
         min-width: 80%;
@@ -2774,6 +2900,9 @@ nav a span {
     .custom-selector {
         display: flex;
     }
+    .profile-main {
+        height: unset;
+    }
     .profile-img, .avatar-container, .profile-img-wrapper {
         width: 20em;
         height: 20em;
@@ -2869,6 +2998,12 @@ nav a span {
     }
 }
 
+@media (max-width: 455px) {
+    .auth-wrapper {
+        padding: 20px 0;
+    }
+}
+
 @media (max-width: 450px) {
     nav ul {
         justify-content: center;
@@ -2879,6 +3014,9 @@ nav a span {
     }
     .theme-change-block {
         margin-left: 1.5em;
+    }
+    .login-li {
+        margin-right: 0.3em;
     }
 }
 
@@ -2936,15 +3074,22 @@ nav a span {
     }
 }
 
-@media (min-height: 880px) {
-    body {
-        align-items: start;
+@media (min-height: 750px) {
+    .auth-wrapper {
+        align-items: center;
+        top: 5%;
+        transform: unset;
+    }
+    .profile-main {
+        top: 7svh;
+        align-items: center;
+        justify-content: center;
     }
 }
 
-@media (min-height: 940px) {
-    .profile-username, .profile-username-input {
-        margin-top: 35vh;
+@media (min-height: 880px) {
+    .index-body {
+        align-items: start;
     }
 }
 
@@ -2952,23 +3097,26 @@ nav a span {
     .weather-project {
         top: 16.4vh;
     }
+}
+
+@media (min-height: 920px) and (min-width: 1350px) {
+    .weather-project {
+        top: 21.4vh;
+    }
     .weather-project-2 {
         top: 16.4vh;
     }
 }
 
-@media (min-height: 750px) {
-    .profile-main {
-        top: -4.1svh;
+@media (min-height: 850px) {
+    footer.margin-top {
+        margin-top: 0;
     }
 }
 
-@media (min-height: 850px) {
+@media (min-height: 1000px) {
     .profile-main {
-        top: -5.6svh;
-    }
-    footer.margin-top {
-        margin-top: 0;
+        top: -2.6svh;
     }
 }
 

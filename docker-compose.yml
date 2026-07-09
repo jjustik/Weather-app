@@ -1,16 +1,51 @@
 version: '3.8'
 
 services:
+  # 1. БАЗА ДАННЫХ
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # 2. КЭШ REDIS (Добавили, так как он требуется вашему Pydantic-конфигу)
+  redis:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - "6379:6379"
+
+  # 3. БЭКЕНД (FastAPI)
   backend:
     build: ./backend
     ports:
       - "8000:8000"
     volumes:
       - ./backend:/app
+    # МАГИЯ ТУТ: Докер сам прочитает твой коренной .env и закинет ВСЕ переменные внутрь Python
+    env_file:
+      - .env
+    environment:
+      # Перезаписываем адреса баз данных, так как внутри Докера они должны стучаться к именам контейнеров (db и redis)
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
 
+  # 4. ФРОНТЕНД
   frontend:
     image: nginx:alpine
     ports:
-      - "3000:80"
+      - "3000:80" 
     volumes:
       - ./frontend:/usr/share/nginx/html
+
+volumes:
+  postgres_data:
