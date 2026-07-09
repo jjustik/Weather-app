@@ -50,8 +50,8 @@ let isLogin = false;
 const form = document.getElementById("profileForm");
 
 //------BACKEND--------
-const BASE_URL = "http://localhost:8000";
-// const BASE_URL = "https://weather-app-production-d28f.up.railway.app";
+// const BASE_URL = "http://localhost:8000";
+const BASE_URL = "https://weather-app-production-d28f.up.railway.app";
 
 function changeModeToAdvanced() {
     if(weatherProject && weatherProject2) {
