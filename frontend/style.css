@@ -870,7 +870,7 @@ nav a span {
 .eight-days-weather {
     position: relative;
     display: block;
-    padding: 0.7em 1em 0;
+    padding: 0.7em 1em 0.7em;
     border-radius: 0.8em;
     opacity: 0.8;
     outline: 4px solid var(--accent-color-2);
