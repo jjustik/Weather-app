@@ -36,6 +36,7 @@ router = APIRouter(tags=["Auth"])
 
 @router.post("/registration")
 async def register_user(
+    request: Request,  # 👈 Добавили request сюда
     response: Response,
     user: UserCreate,
     session: Annotated[AsyncSession, Depends(get_async_session)]
@@ -82,12 +83,14 @@ async def register_user(
     new_user.refresh_token_hash = token_hash(refresh_token)
     await session.commit()
 
+    is_production = "localhost" not in str(request.base_url)
+
     response.set_cookie(
         key="access_token",
         value=access_token,
         httponly=True,
-        secure=False,
-        samesite="lax",
+        secure=is_production,
+        samesite="none" if is_production else "lax",
         max_age=settings.access_token_expire_minutes * 60,
         path="/"
     )
@@ -96,8 +99,8 @@ async def register_user(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=False,
-        samesite="lax",
+        secure=is_production,  # Изменили тут
+        samesite="none" if is_production else "lax",  # Изменили тут
         max_age=settings.refresh_token_expire_days * 24 * 60 * 60,
         path="/auth/refresh"
     )
@@ -114,6 +117,7 @@ async def register_user(
 
 @router.post("/login")
 async def login_user(
+    request: Request, 
     response: Response,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()], 
     session: Annotated[AsyncSession, Depends(get_async_session)]
@@ -134,12 +138,14 @@ async def login_user(
     user.refresh_token_hash = token_hash(refresh_token)
     await session.commit()
 
+    is_production = "localhost" not in str(request.base_url)
+
     response.set_cookie(
         key="access_token",
         value=access_token,
         httponly=True,
-        secure=False,   
-        samesite="lax",
+        secure=is_production,
+        samesite="none" if is_production else "lax",
         max_age=settings.access_token_expire_minutes * 60,
         path="/"
     )
@@ -148,8 +154,8 @@ async def login_user(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=False,
-        samesite="lax",
+        secure=is_production,   # Изменили тут
+        samesite="none" if is_production else "lax",  # Изменили тут
         max_age=settings.refresh_token_expire_days * 24 * 60 * 60,
         path="/auth/refresh"
     )
@@ -157,108 +163,25 @@ async def login_user(
     return {"Message": "Logged in"}
 
 
-@router.post("/forgot-password")
-async def forgot_password(
-    data: ForgotPasswordRequest,
-    background_tasks: BackgroundTasks,
-    session: AsyncSession = Depends(get_async_session),
-    redis_cl=Depends(get_redis)
-):
-    query = select(UserModel).where(UserModel.email == data.email.lower().strip())
-    result = await session.execute(query)
-    user = result.scalar_one_or_none()
+    is_production = "localhost" not in str(request.base_url)
 
-    if not user:
-        return {"message": "If the email exists, a reset link has been sent."}
-    
-    token = str(uuid.uuid4())
-    redis_key = f"pwd_reset:{token}"
-    await redis_cl.set(redis_key, str(user.id), ex=900)
-    
-    reset_link = f"http://localhost:3000/reset-password?token={token}"
-    
-    background_tasks.add_task(send_reset_email, user.email, reset_link)
-    
-    return {"message": "If the email exists, a reset link has been sent."}
-
-
-@router.post("/reset-password")
-async def reset_password(
-    data: ResetPasswordRequest,
-    session: AsyncSession = Depends(get_async_session),
-    redis_cl=Depends(get_redis)
-):
-    redis_key = f"pwd_reset:{data.token}"
-    
-    user_id = await redis_cl.get(redis_key)
-    if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Token has expired or is invalid"
-        )
-    
-    if isinstance(user_id, bytes):
-        user_id = user_id.decode('utf-8')
-    
-    query = select(UserModel).where(UserModel.id == uuid.UUID(user_id))
-    result = await session.execute(query)
-    user = result.scalar_one_or_none()
-    
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    user.password_hash = hash_password(data.new_password)
-    await session.commit()
-    
-    await redis_cl.delete(redis_key)
-    
-    return {"message": "Password updated successfully"}
-
-
-@router.post("/refresh", response_model=StatusResponse)
-async def refresh_tokens(
-    request: Request,
-    response: Response,
-    session: Annotated[AsyncSession, Depends(get_async_session)]
-):
-    refresh_token = request.cookies.get("refresh_token")
-    if not refresh_token:
-        raise HTTPException(status_code=401, detail="Refresh token missing")
-        
-    try:
-        payload = jwt.decode(refresh_token, settings.refresh_secret_key, algorithms=[settings.algorithm])
-        user_id_str = payload.get("sub")
-        if user_id_str is None:
-            raise HTTPException(status_code=401, detail="Invalid token payload")
-        user_id = uuid.UUID(user_id_str)
-    except (InvalidTokenError, ValueError):
-        raise HTTPException(status_code=401, detail="Refresh token expired or invalid")
-        
-    result = await session.execute(select(UserModel).where(UserModel.id == user_id))
-    user = result.scalar_one_or_none()
-    
-    if not user or not user.refresh_token_hash:
-        raise HTTPException(status_code=401, detail="Session not found")
-        
-    if user.refresh_token_hash != token_hash(refresh_token):
-        user.refresh_token_hash = None
-        await session.commit()
-        raise HTTPException(status_code=401, detail="Token compromise detected. Please re-login.")
-        
-    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
-    new_access_token = create_access_token(data={"sub": str(user.id)}, expires_delta=access_token_expires)
-    new_refresh_token = create_refresh_token(data={"sub": str(user.id)})
-    
-    user.refresh_token_hash = token_hash(new_refresh_token)
-    await session.commit()
-    
     response.set_cookie(
-        key="access_token", value=new_access_token, httponly=True, secure=False, samesite="lax",
-        max_age=settings.access_token_expire_minutes * 60, path="/"
+        key="access_token", 
+        value=new_access_token, 
+        httponly=True, 
+        secure=is_production,
+        samesite="none" if is_production else "lax",
+        max_age=settings.access_token_expire_minutes * 60, 
+        path="/"
     )
     response.set_cookie(
-        key="refresh_token", value=new_refresh_token, httponly=True, secure=False, samesite="lax",
-        max_age=settings.refresh_token_expire_days * 24 * 60 * 60, path="/auth/refresh"
+        key="refresh_token", 
+        value=new_refresh_token, 
+        httponly=True, 
+        secure=is_production,
+        samesite="none" if is_production else "lax",
+        max_age=settings.refresh_token_expire_days * 24 * 60 * 60, 
+        path="/auth/refresh"
     )
     
     return StatusResponse(status="success", message="Tokens successfully refreshed")
