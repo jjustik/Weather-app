@@ -22,7 +22,7 @@ app.mount("/media", StaticFiles(directory=str(MEDIA_DIR)), name="media")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["https://justik-weather.vercel.app/index.html"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

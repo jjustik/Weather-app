@@ -1,0 +1,23 @@
+services:
+  weather_db:
+    image: postgres:15
+    container_name: weather_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: weather_admin
+      POSTGRES_PASSWORD: WeatherM4_Secure2026
+      POSTGRES_DB: weather_data
+    ports:
+      - "5433:5432"
+    volumes:
+      - weather_postgres_data:/var/lib/postgresql/data
+
+  weather_redis:
+    image: redis:7-alpine
+    container_name: weather_redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+volumes:
+  weather_postgres_data:
