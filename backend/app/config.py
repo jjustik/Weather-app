@@ -7,8 +7,10 @@ env_path = os.path.join(current_dir, "..", "..", ".env")
 
 class Settings(BaseSettings):
     secret_key: str
+    refresh_secret_key: str
     algorithm: str
     access_token_expire_minutes: int
+    refresh_token_expire_days: int
     database_url: str
     redis_url: str
     weather_cache_expire: int

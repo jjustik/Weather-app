@@ -1,9 +1,8 @@
 import jwt
-import os
+import hashlib
 from typing import Annotated
 from uuid import UUID
 from datetime import datetime, timedelta, timezone
-import uuid as uuid_module
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi import Cookie
 from jwt.exceptions import InvalidTokenError
@@ -11,18 +10,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from fastapi import Depends, HTTPException, status
 from pwdlib import PasswordHash
-from dotenv import load_dotenv
 from email_validator import validate_email, EmailNotValidError
 
 from app.models.user import User as UserModel
-from app.schemas.users import UserCreate, User
 from app.db import get_async_session
-
-
-load_dotenv()
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
+from app.config import settings
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 password_hash = PasswordHash.recommended()
@@ -56,7 +48,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     else:
         expire = datetime.now(timezone.utc) + timedelta(minutes=15)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
     return encoded_jwt
 
 
@@ -76,8 +68,8 @@ async def get_current_user(
     try:
         payload = jwt.decode(
             access_token,
-            SECRET_KEY,
-            algorithms=[ALGORITHM]
+            settings.secret_key,
+            algorithms=[settings.algorithm]
         )
 
         user_id_str = payload.get("sub")
@@ -108,3 +100,15 @@ def is_email(value: str) -> bool:
         return True
     except EmailNotValidError:
         return False
+    
+
+def token_hash(token: str) -> str:
+    return hashlib.sha256(token.encode()).hexdigest()
+
+def create_refresh_token(data: dict):
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + timedelta(days=settings.refresh_token_expire_days)
+    to_encode.update({"exp": expire, "type": "refresh"})
+
+    encoded_jwt = jwt.encode(to_encode, settings.refresh_secret_key, algorithm=settings.algorithm)
+    return encoded_jwt

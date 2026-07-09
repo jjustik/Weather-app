@@ -12,6 +12,8 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    refresh_token_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
     
     cities: Mapped[list[str] | None] = mapped_column(JSONB, nullable=True)
     add_button: Mapped[bool] = mapped_column(default=True)
