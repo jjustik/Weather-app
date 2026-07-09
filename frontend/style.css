@@ -2501,6 +2501,13 @@ nav a span {
     }
 }
 
+@media (min-width: 1700px) {
+    .weather-project-2 {
+        width: unset;
+        grid-template-columns: 10em 60em 10em;
+    }
+}
+
 @media (max-width: 1505px) {
     .right-arrow {
         right: 24%;
@@ -2905,7 +2912,6 @@ nav a span {
     .height-expansion {
         padding-bottom: 18vh;
     }
-
 }
 
 @media (max-width: 500px) {
@@ -3138,7 +3144,26 @@ nav a span {
     }
 }
 
-@media (min-height: 1000px) {
+@media (min-width: 1350px) and (min-height: 890px) {
+    .weather-project-2 {
+        top: 13.4vh;
+    }
+}
+
+
+@media (min-width: 1350px) and (min-height: 930px) {
+    .weather-project-2 {
+        top: 15.4vh;
+    }
+}
+
+@media (min-width: 1350px) and (min-height: 970px) {
+    .weather-project-2 {
+        top: 17.4vh;
+    }
+}
+
+@media (min-height: 1000px) and (max-width: 768px) {
     .profile-main {
         top: -2.6svh;
     }
