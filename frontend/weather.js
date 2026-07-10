@@ -1417,7 +1417,7 @@ function addButtonsToggleFunction() {
             fullWeatherContainer.querySelector(".weather-h1").classList.add("hidden")
             fullWeatherContainer.querySelector(".add-city-button-block-1").classList.add("grid")
             fullWeatherContainer.classList.remove("hidden")
-            autoSwitchByElement(fullWeatherContainers[0])
+            autoSwitchByElement(fullWeatherContainers[i-1])
             addEventListenerForAddButton()
         }
         saveAddButtonState();
