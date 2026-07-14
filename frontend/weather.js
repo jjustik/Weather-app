@@ -770,7 +770,9 @@ function findTheWeatherBlockButton1() {
         formH1?.addEventListener("submit", newHandlers.prevent)
     })
     document.querySelector(`#weather-${i}`).classList.add("grid")
-    currentMode === "Advanced" ? inputH1s[1].focus() : inputH1s[0].focus();
+    if(isTablet) {
+        currentMode === "Advanced" ? inputH1s[1].focus() : inputH1s[0].focus();
+    }
     addingBlockFromButton = true;
 }
 

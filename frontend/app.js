@@ -50,8 +50,8 @@ let isLogin = false;
 const form = document.getElementById("profileForm");
 
 //------BACKEND--------
-// const BASE_URL = "http://localhost:8000";
-const BASE_URL = "https://weather-app-production-d28f.up.railway.app";
+const BASE_URL = "http://localhost:8000";
+// const BASE_URL = "https://weather-app-production-d28f.up.railway.app";
 
 function changeModeToAdvanced() {
     if(weatherProject && weatherProject2) {
@@ -177,7 +177,9 @@ function createUsernameInput() {
         usernameInput.classList.add("final-input-width");
     }, 10);
     usernameInput.value = username;
-    usernameInput.focus();
+    if(isTablet) {
+        usernameInput.focus();
+    }
     username = "";
     addErrorMessageListener();
     editingUsername = true;
@@ -259,10 +261,12 @@ function hideProfileMenu() {
 
 function toggleBtnAnimation() {
     searchBar.classList.toggle("active")
-    if(searchBar.classList.contains("active")) {
-        searchInput.focus();
-    } else {
-        searchInput.blur();
+    if(isTablet) {
+        if(searchBar.classList.contains("active")) {
+            searchInput.focus();
+        } else {
+            searchInput.blur();
+        }
     }
     const clearInput = () => {
         searchInput.value = "";
@@ -463,11 +467,34 @@ async function checkAuth() {
         }
         const userData = await res.json();
         console.log('Данные залогиненного пользователя:', userData);
+        loadProfileMenu(userData)
         updateAuthUI(true)
     } catch (error) {
         console.error('Ошибка сети при проверке авторизации', error)
         updateAuthUI(false)
     }
+}
+
+function loadProfileMenu(data) {
+    const profileMenuUsername = document.querySelector(".profile-menu-username")
+    const profileMenuEmail = document.querySelector(".profile-menu-email")
+    const profileMenuAvatar = document.querySelector(".middle-profile-image")
+    const setUsernameA = document.querySelector(".set-username-a")
+    const setEmailA = document.querySelector(".set-email-a")
+    profileMenuUsername.textContent = data.name;
+    if(data.name === null) {
+        profileMenuUsername.classList.add("hidden")
+        setUsernameA.classList.add("block")
+    } else {
+        profileMenuUsername.textContent = data.name;
+    }
+    if(data.email === null) {
+        profileMenuEmail.classList.add("hidden")
+        setEmailA.classList.add("block")
+    } else {
+        profileMenuEmail.textContent = data.email
+    }
+    profileMenuAvatar.url = data.avatar_url
 }
 
 loginVisibilitybtn?.addEventListener("click", ()=> {
