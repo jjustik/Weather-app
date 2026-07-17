@@ -133,3 +133,34 @@ async def change_nickname(
     await session.refresh(current_user)
     
     return {"name": current_user.name}
+
+@router.put("/me/change-username")
+async def change_username(
+    new_username: str,
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_async_session)]
+    ):
+
+    new_username = new_username.strip()
+
+    if not new_username:
+        raise HTTPException(
+            status_code=400,
+            detail="Username cannot be empty"
+        )
+    
+    existing_user_query = select(UserModel).where(UserModel.email == new_username)
+    existing_user_result = await session.execute(existing_user_query)
+    existing_user = existing_user_result.scalar_one_or_none()
+
+    if existing_user:
+        raise HTTPException(
+            status_code=400,
+            detail="User with this username already exists"
+        )
+    
+    current_user.email = new_username
+    await session.commit()
+    await session.refresh(current_user)
+
+    return {"email": current_user.email}

@@ -1,10 +1,7 @@
-import uuid
 from datetime import timedelta
 from typing import Annotated
-import jwt
-from jwt.exceptions import InvalidTokenError
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,8 +19,6 @@ from app.auth import (
     token_hash
 )
 from app.schemas.users import (
-    ForgotPasswordRequest, 
-    ResetPasswordRequest, 
     UserCreate,
     StatusResponse
 )
@@ -36,7 +31,7 @@ router = APIRouter(tags=["Auth"])
 
 @router.post("/registration")
 async def register_user(
-    request: Request,  # 👈 Добавили request сюда
+    request: Request,
     response: Response,
     user: UserCreate,
     session: Annotated[AsyncSession, Depends(get_async_session)]
@@ -154,8 +149,8 @@ async def login_user(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=is_production,   # Изменили тут
-        samesite="none" if is_production else "lax",  # Изменили тут
+        secure=is_production,
+        samesite="none" if is_production else "lax",
         max_age=settings.refresh_token_expire_days * 24 * 60 * 60,
         path="/auth/refresh"
     )
