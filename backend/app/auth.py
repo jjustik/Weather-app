@@ -94,14 +94,6 @@ async def get_current_user(
 
     return user
 
-# def is_email(value: str) -> bool:
-#     try:
-#         validate_email(value)
-#         return True
-#     except EmailNotValidError:
-#         return False
-    
-
 def token_hash(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
@@ -112,3 +104,11 @@ def create_refresh_token(data: dict):
 
     encoded_jwt = jwt.encode(to_encode, settings.refresh_secret_key, algorithm=settings.algorithm)
     return encoded_jwt
+
+def verify_token(token: str) -> dict | None:
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        return payload
+    except Exception:
+
+        return None
