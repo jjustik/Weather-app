@@ -2,7 +2,7 @@ from datetime import timedelta
 import secrets
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, BackgroundTasks, Cookie, Depends, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,7 +17,8 @@ from app.auth import (
     authenticate_user, 
     create_access_token, 
     create_refresh_token,
-    token_hash
+    token_hash,
+    verify_token
 )
 from app.schemas.users import (
     ForgotPasswordRequest,
@@ -155,7 +156,7 @@ async def login_user(
 async def forgot_password(
     data: ForgotPasswordRequest,
     background_tasks: BackgroundTasks,
-    session: AsyncSession = Depends(get_async_session),
+    session: Annotated[AsyncSession, Depends(get_async_session)],
     redis = Depends(get_redis)
 ):
     query = select(UserModel).where(UserModel.email == data.email.lower().strip())
@@ -180,7 +181,7 @@ async def forgot_password(
 @router.post("/reset-password", status_code=status.HTTP_200_OK)
 async def reset_password(
     data: ResetPasswordRequest,
-    session: AsyncSession = Depends(get_async_session),
+    session: Annotated[AsyncSession, Depends(get_async_session)],
     redis = Depends(get_redis)
 ):
     
@@ -211,3 +212,58 @@ async def reset_password(
     await redis.delete(token_key)
     
     return {"message": "Password successfully reset."}
+
+
+@router.post("/refresh", status_code=status.HTTP_200_OK)
+async def refresh_token(
+    request: Request,
+    response: Response,
+    session: Annotated[AsyncSession, Depends(get_async_session)],
+    refresh_token: Annotated[str | None, Cookie()] = None):
+
+    if not refresh_token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token missing.") 
+    
+    payload = verify_token(refresh_token)
+    if not payload:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token.")
+        
+    user_id_str = payload.get("sub")
+
+    result = await session.execute(select(UserModel).where(UserModel.id == user_id_str))
+    user = result.scalar_one_or_none()
+
+    if not user or user.refresh_token_hash != token_hash(refresh_token):
+        response.delete_cookie("access_token", path="/")
+        response.delete_cookie("refresh_token", path="/auth/refresh")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token.")
+    
+    new_access_token = create_access_token(data={"sub": str(user.id)})
+    new_refresh_token = create_refresh_token(data={"sub": str(user.id)})
+
+    user.refresh_token_hash = token_hash(new_refresh_token)
+    await session.commit()
+
+    is_production = "localhost" not in str(request.base_url)
+
+    response.set_cookie(
+        key="access_token",
+        value=new_access_token,
+        httponly=True,
+        secure=is_production,
+        samesite="none" if is_production else "lax",
+        max_age=settings.access_token_expire_minutes * 60,
+        path="/"
+    )
+
+    response.set_cookie(
+        key="refresh_token",
+        value=new_refresh_token,
+        httponly=True,
+        secure=is_production,
+        samesite="none" if is_production else "lax",
+        max_age=settings.refresh_token_expire_days * 24 * 60 * 60,
+        path="/auth/refresh"
+    )
+
+    return {"message": "Tokens refreshed successfully."}
