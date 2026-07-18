@@ -35,7 +35,8 @@
     --mini-container-text-color-2: rgb(30, 92, 173);
     --profile-menu-color: rgb(55, 55, 55);
     --profile-menu-link-color: rgb(0, 126, 180);
-    --profile-menu-set-a-link-color: rgb(172, 21, 172);
+    --profile-menu-set-a-link-color: rgb(96, 96, 96);
+    --profile-menu-set-a-link-color-hover: rgb(39, 39, 39);
     --footer-color: #ccc;
     --button-text-color: black;
     --button-text-color-hover: #fff;
@@ -93,7 +94,8 @@
     --mini-container-text-color-2: rgb(30, 92, 173);
     --profile-menu-color: rgb(109, 109, 109);
     --profile-menu-link-color: rgb(151, 151, 151);
-    --profile-menu-set-a-link-color: rgb(129, 0, 129);
+    --profile-menu-set-a-link-color: rgb(96, 96, 96);
+    --profile-menu-set-a-link-color-hover: rgb(76, 76, 76);
     --footer-color: #6a6a6a;
     --button-text-color: #787878;
     --button-text-color-hover: #9b9b9b;
@@ -149,7 +151,8 @@
     --mini-container-color: #a0a0a0;
     --mini-container-text-color: #4e4e4e;
     --mini-container-text-color-2: rgb(0, 100, 83);
-    --profile-menu-set-a-link-color: rgb(172, 21, 172);
+    --profile-menu-set-a-link-color: rgb(96, 96, 96);
+    --profile-menu-set-a-link-color-hover: rgb(39, 39, 39);
     --footer-color: #6a6a6a;
     --button-text-color: #787878;
     --button-text-color-hover: #9b9b9b;
@@ -530,6 +533,11 @@ nav li {
     font-weight: 400;
     color: var(--profile-menu-set-a-link-color);
     text-decoration: none;
+    transition: color 0.1s;
+}
+
+.profile-menu-set-a:hover {
+    color: var(--profile-menu-set-a-link-color-hover);
 }
 
 .logout-icon {

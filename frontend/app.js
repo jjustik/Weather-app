@@ -47,6 +47,7 @@ let searchBtnActive = false;
 let passLengthReq = false;
 let passNumAndLettersReq = false;
 let isLogin = false;
+let authCities = null;
 const form = document.getElementById("profileForm");
 
 //------BACKEND--------
@@ -154,13 +155,6 @@ function loadTheme() {
     }
 }
 
-function getUsername() {
-    let username = localStorage.getItem("username") || "";
-    if(username.length > 0) {
-        form.innerHTML = `<h2 class="profile-username">${username}</h2>`
-    }
-}
-
 function setWidthForUsernameInput(flag = false) {
     let username = localStorage.getItem("username") || "";
     let usernameInputWidth = username.length * 16;
@@ -177,7 +171,7 @@ function createUsernameInput() {
         usernameInput.classList.add("final-input-width");
     }, 10);
     usernameInput.value = username;
-    if(isTablet) {
+    if(!isTablet.matches) {
         usernameInput.focus();
     }
     username = "";
@@ -263,7 +257,7 @@ function hideProfileMenu() {
 
 function toggleBtnAnimation() {
     searchBar.classList.toggle("active")
-    if(isTablet) {
+    if(!isTablet.matches) {
         if(searchBar.classList.contains("active")) {
             searchInput.focus();
         } else {
@@ -465,15 +459,26 @@ async function checkAuth() {
         })
         if(!res.ok) {
             updateAuthUI(false);
+            if(form) {
+                getLocalUsername();
+            }
             return;
         }
         const userData = await res.json();
         console.log('Данные залогиненного пользователя:', userData);
+        Cities = userData.cities;
         loadProfileMenu(userData)
+        getAvatar(userData)
+        if(form) {
+            getUsername(userData)
+        }
         updateAuthUI(true)
-    } catch (error) {
-        console.error('Ошибка сети при проверке авторизации', error)
+    } catch (err) {
+        console.error('Ошибка сети при проверке авторизации', err)
         updateAuthUI(false)
+        if(form) {
+            getLocalUsername();
+        }
     }
 }
 
@@ -519,14 +524,89 @@ signupVisibilitybtn?.addEventListener("click", ()=> {
     }
 })
 
+function getUsername(data) {
+    if(!data.name === null) {
+        let username = data.name;
+        form.innerHTML = `<h2 class="profile-username">${username}</h2>`
+    }
+}
+
+function getLocalUsername() {
+    let username = localStorage.getItem("username") || "";
+    if(username.length > 0) {
+        form.innerHTML = `<h2 class="profile-username">${username}</h2>`
+    }
+}
+
+function getAvatar(data) {
+    if(avatarImg) {
+        avatarImg.url = data.avatar_url;
+    }
+}
+
+function saveAddButtonState() {
+    localStorage.setItem("AddButton", String(addButton))
+}
+
+async function loadAddButtonState() {
+    try {
+        const res = await fetch(`${BASE_URL}/users/me`, {
+            method: 'GET',
+            credentials: 'include'
+        })
+        if(!res.ok) {
+            loadLocalAddButtonState();
+        }
+        const userData = await res.json();
+        addButton = userData.add_button
+    } catch(err) {
+        console.error('Ошибка сети при загрузке городов', err)
+        loadLocalAddButtonState();
+    }
+}
+
+function loadLocalAddButtonState() {
+    const addButtonState = localStorage.getItem("AddButton");
+    if (addButtonState === null) {
+        addButton = true;
+        return;
+    }
+    addButtonState === "true" ? addButton = true : addButton = false;
+}
+
+function saveCities() {
+    const CitiesStorage = JSON.stringify(Cities);
+    localStorage.setItem("Cities", CitiesStorage)
+}
+
+async function loadCities() {
+    try {
+        const res = await fetch(`${BASE_URL}/users/me`, {
+            method: 'GET',
+            credentials: 'include'
+        })
+        if(!res.ok) {
+            loadLocalCities()
+            return;
+        }
+        const userData = await res.json();
+        Cities = userData.cities;
+    } catch(err) {
+        console.error('Ошибка сети при загрузке городов', err)
+        loadLocalCities()
+    }
+}
+
+function loadLocalCities() {
+    const CitiesStorage = localStorage.getItem("Cities");
+    Cities = JSON.parse(CitiesStorage) || []
+}
+
 document.addEventListener("DOMContentLoaded", ()=> {
     loadTheme();
     getMode();
     profileMenuToggle();
     checkAuth()
-    if(form) {
-        getUsername();
-    }
     themeChangeBlock.addEventListener("mouseenter", ()=> {
         const allThemes = document.querySelectorAll(".theme")
         allThemes.forEach(el => el.classList.add("pointer-events"))
@@ -570,7 +650,7 @@ document.addEventListener("DOMContentLoaded", ()=> {
         if(editingUsername === false) {
             const usernameInput = document.querySelector(".profile-username-input");
             if(!usernameInput) {
-                createUsernameInput();
+                createUsernameInput(true);
                 editingUsername = true;
                 e.stopPropagation();
             }
