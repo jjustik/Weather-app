@@ -3,14 +3,14 @@ import hashlib
 from typing import Annotated
 from uuid import UUID
 from datetime import datetime, timedelta, timezone
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordBearer
 from fastapi import Cookie
 from jwt.exceptions import InvalidTokenError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException
 from pwdlib import PasswordHash
-from email_validator import validate_email, EmailNotValidError
+from email_validator import validate_email
 
 from app.models.user import User as UserModel
 from app.db import get_async_session
@@ -26,10 +26,10 @@ def verify_password(plain_password: str, hashed_password: str):
 def hash_password(password: str):
     return password_hash.hash(password)
 
-async def authenticate_user(name: str, password: str, session: AsyncSession):
+async def authenticate_user(email: str, password: str, session: AsyncSession):
     result = await session.execute(
         select(UserModel).where(
-            (UserModel.email == name) | (UserModel.name == name)
+            (UserModel.email == email) | (UserModel.name == email)
         )
     )
     user = result.scalar_one_or_none()
@@ -94,12 +94,12 @@ async def get_current_user(
 
     return user
 
-def is_email(value: str) -> bool:
-    try:
-        validate_email(value)
-        return True
-    except EmailNotValidError:
-        return False
+# def is_email(value: str) -> bool:
+#     try:
+#         validate_email(value)
+#         return True
+#     except EmailNotValidError:
+#         return False
     
 
 def token_hash(token: str) -> str:

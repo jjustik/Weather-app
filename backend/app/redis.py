@@ -1,7 +1,6 @@
-from redis import Redis
+import os
 import redis.asyncio as aioredis
 from dotenv import load_dotenv
-import os
 
 load_dotenv()
 REDIS_URL = os.getenv("REDIS_URL")

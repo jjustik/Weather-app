@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from pathlib import Path
 from uuid import uuid4
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
+from sqlalchemy import update
 from typing import Annotated
 
 from app.db import get_async_session
@@ -102,34 +102,3 @@ async def update_user(
     await session.refresh(current_user)
 
     return {"add_button": current_user.add_button}
-
-
-@router.put("/me/change-nickname")
-async def change_nickname(
-    new_nickname: str,
-    current_user: Annotated[UserModel, Depends(get_current_user)],
-    session: Annotated[AsyncSession, Depends(get_async_session)]
-):
-    new_nickname = new_nickname.strip()
-
-    if not new_nickname:
-        raise HTTPException(
-            status_code=400,
-            detail="Nickname cannot be empty"
-        )
-    
-    existing_user_query = select(UserModel).where(UserModel.name == new_nickname)
-    existing_user_result = await session.execute(existing_user_query)
-    existing_user = existing_user_result.scalar_one_or_none()
-
-    if existing_user:
-        raise HTTPException(
-            status_code=400,
-            detail="User with this nickname already exists"
-        )
-    
-    current_user.name = new_nickname
-    await session.commit()
-    await session.refresh(current_user)
-    
-    return {"name": current_user.name}
