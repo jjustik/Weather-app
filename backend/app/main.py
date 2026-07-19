@@ -7,7 +7,7 @@ from pathlib import Path
 from app.db import create_db_and_tables
 from app.routers import auth, users, weather 
 
-MEDIA_DIR = Path("media")
+MEDIA_DIR = Path("images")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -18,7 +18,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-app.mount("/media", StaticFiles(directory=str(MEDIA_DIR)), name="media")
+app.mount("/images", StaticFiles(directory=str(MEDIA_DIR)), name="images")
 
 app.add_middleware(
     CORSMiddleware,
