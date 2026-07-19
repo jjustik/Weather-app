@@ -11,7 +11,7 @@ from app.models.user import User as UserModel
 from app.schemas.city import CityUpdate
 
 MEDIA_DIR = Path("")
-AVATARS_DIR = Path(__file__).resolve().parent.parent.parent.parent / "frontend" / "images" / "users"
+AVATARS_DIR = Path(__file__).resolve().parent.parent.parent.parent / "frontend" / "avatars" / "users"
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -64,7 +64,7 @@ async def upload_avatar(
 
     file_path.write_bytes(contents)
 
-    current_user.avatar_url = f"/images/users/{filename}"
+    current_user.avatar_url = f"/avatars/users/{filename}"
 
     await session.commit()
     await session.refresh(current_user)

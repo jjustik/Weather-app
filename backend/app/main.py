@@ -7,7 +7,8 @@ from pathlib import Path
 from app.db import create_db_and_tables
 from app.routers import auth, users, weather 
 
-FRONTEND_IMAGES_DIR = Path(__file__).resolve().parent.parent.parent / "frontend" / "images"
+FRONTEND_AVATARS_DIR = Path(__file__).resolve().parent.parent.parent / "frontend" / "avatars" / "users"
+FRONTEND_AVATARS_DIR.mkdir(parents=True, exist_ok=True)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -16,7 +17,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-app.mount("/images", StaticFiles(directory=str(FRONTEND_IMAGES_DIR)), name="frontend_images")
+app.mount("/avatars/users", StaticFiles(directory=str(FRONTEND_AVATARS_DIR)), name="user_avatars")
 
 app.add_middleware(
     CORSMiddleware,
