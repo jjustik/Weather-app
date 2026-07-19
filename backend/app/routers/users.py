@@ -12,7 +12,7 @@ from app.schemas.city import CityUpdate
 
 MEDIA_DIR = Path("images")
 AVATARS_DIR = MEDIA_DIR / "avatars"
-DEFAULT_AVATAR_URL = "/images/default-avatar.jpg"
+DEFAULT_AVATAR_URL = "/images/avatars/default-avatar.jpg"
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
