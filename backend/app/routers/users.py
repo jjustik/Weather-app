@@ -10,9 +10,8 @@ from app.auth import get_current_user
 from app.models.user import User as UserModel
 from app.schemas.city import CityUpdate
 
-MEDIA_DIR = Path("images")
-AVATARS_DIR = MEDIA_DIR / "avatars"
-DEFAULT_AVATAR_URL = "/images/avatars/default-avatar.jpg"
+MEDIA_DIR = Path("")
+AVATARS_DIR = Path(__file__).resolve().parent.parent.parent.parent / "frontend" / "images" / "users"
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -23,7 +22,7 @@ async def read_me(current_user: Annotated[UserModel, Depends(get_current_user)])
         "id": current_user.id,
         "name": current_user.name,
         "email": current_user.email,
-        "avatar_url": current_user.avatar_url or DEFAULT_AVATAR_URL,
+        "avatar_url": current_user.avatar_url or None,
         "cities": current_user.cities or [],
         "add_button": current_user.add_button
     }
@@ -61,9 +60,11 @@ async def upload_avatar(
     filename = f"{current_user.id}_{uuid4().hex}{extension}"
     file_path = AVATARS_DIR / filename
 
+    AVATARS_DIR.mkdir(parents=True, exist_ok=True)
+
     file_path.write_bytes(contents)
 
-    current_user.avatar_url = f"/media/avatars/{filename}"
+    current_user.avatar_url = f"/images/users/{filename}"
 
     await session.commit()
     await session.refresh(current_user)

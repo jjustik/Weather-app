@@ -57,7 +57,7 @@ async def register_user(
             email=email_value,
             name=None,
             password_hash=hash_password(user.password),
-            avatar_url=DEFAULT_AVATAR_URL,
+            avatar_url=None,
         )
 
     session.add(new_user)

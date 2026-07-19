@@ -7,18 +7,16 @@ from pathlib import Path
 from app.db import create_db_and_tables
 from app.routers import auth, users, weather 
 
-MEDIA_DIR = Path("images")
+FRONTEND_IMAGES_DIR = Path(__file__).resolve().parent.parent.parent / "frontend" / "images"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    MEDIA_DIR.mkdir(parents=True, exist_ok=True)
-    (MEDIA_DIR / "avatars").mkdir(parents=True, exist_ok=True)
     await create_db_and_tables()
     yield
 
 app = FastAPI(lifespan=lifespan)
 
-app.mount("/images", StaticFiles(directory=str(MEDIA_DIR)), name="images")
+app.mount("/images", StaticFiles(directory=str(FRONTEND_IMAGES_DIR)), name="frontend_images")
 
 app.add_middleware(
     CORSMiddleware,
