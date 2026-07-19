@@ -10,9 +10,9 @@ from app.auth import get_current_user
 from app.models.user import User as UserModel
 from app.schemas.city import CityUpdate
 
-MEDIA_DIR = Path("media")
+MEDIA_DIR = Path("images")
 AVATARS_DIR = MEDIA_DIR / "avatars"
-DEFAULT_AVATAR_URL = "/media/default-avatar.jpg"
+DEFAULT_AVATAR_URL = "/images/default-avatar.jpg"
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
