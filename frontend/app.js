@@ -330,7 +330,7 @@ async function registration() {
         const res = await fetch(`${BASE_URL}/registration`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ login: login, password: password })
+            body: JSON.stringify({ user_email: login, password: password })
         });
         const data = await res.json();
         console.log(data)
@@ -539,9 +539,11 @@ function getLocalUsername() {
 }
 
 function getAvatar(data) {
+    const profileMenuAvatar = document.querySelector(".middle-profile-image")
     if(avatarImg) {
-        avatarImg.url = data.avatar_url;
+        avatarImg.src = data.avatar_url;
     }
+    profileMenuAvatar.src = data.avatar_url;
 }
 
 function saveAddButtonState() {
@@ -556,6 +558,7 @@ async function loadAddButtonState() {
         })
         if(!res.ok) {
             loadLocalAddButtonState();
+            return;
         }
         const userData = await res.json();
         addButton = userData.add_button
@@ -575,6 +578,11 @@ function loadLocalAddButtonState() {
 }
 
 function saveCities() {
+    const CitiesStorage = JSON.stringify(Cities);
+    localStorage.setItem("Cities", CitiesStorage)
+}
+
+function saveCitiesLocal() {
     const CitiesStorage = JSON.stringify(Cities);
     localStorage.setItem("Cities", CitiesStorage)
 }
@@ -722,6 +730,23 @@ document.addEventListener("DOMContentLoaded", ()=> {
         })
 
         avatarImg.onload = () => URL.revokeObjectURL(url)
+    })
+    saveBtn?.addEventListener("click", async ()=> {
+        const file = avatarInput.files[0];
+        if(!file) return;
+
+        const formData = new FormData();
+        formData.append('avatar', file)
+
+        try {
+            const res = await fetch(`${BASE_URL}/users/me/avatar`, {
+                method: 'POST',
+                body: formData,
+                credentials: 'include'
+            })
+        } catch(err) {
+            console.error('Ошибка сети:', err);
+        }
     })
     signUpPassInput?.addEventListener("input", function() {
         passCheck()
