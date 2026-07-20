@@ -3,7 +3,7 @@ from pathlib import Path
 from uuid import uuid4
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import update
-from typing import Annotated
+from typing import Annotated, Optional
 
 from app.db import get_async_session
 from app.auth import get_current_user
@@ -103,3 +103,17 @@ async def update_user(
     await session.refresh(current_user)
 
     return {"add_button": current_user.add_button}
+
+
+@router.put("/me/name")
+async def update_user_name(
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_async_session)],
+    name: Optional[str] = None
+):
+    current_user.name = name
+
+    await session.commit()
+    await session.refresh(current_user)
+
+    return {"name": current_user.name}
