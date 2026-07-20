@@ -117,3 +117,26 @@ async def update_user_name(
     await session.refresh(current_user)
 
     return {"name": current_user.name}
+
+
+@router.delete("/me/avatar")
+async def delete_avatar(
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_async_session)]
+):
+
+    if current_user.avatar_url:
+        filename = Path(current_user.avatar_url).name
+        file_path = AVATARS_DIR / filename
+
+        if file_path.exists():
+            file_path.unlink()
+
+    current_user.avatar_url = None
+
+    await session.commit()
+    await session.refresh(current_user)
+
+    return {
+        "avatar_url": current_user.avatar_url
+    }
