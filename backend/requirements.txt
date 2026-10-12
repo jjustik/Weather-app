@@ -10,3 +10,10 @@ greenlet==3.5.0
 redis==4.5.4
 asyncpg==0.31.0
 aiosmtplib==1.1.6
+aiohttp==3.14.3  
+loguru==0.7.3
+pycountry==22.3.5
+datetime==6.0
+charset_normalizer==3.5.1
+requests==2.34.2
+stripe==15.6.1

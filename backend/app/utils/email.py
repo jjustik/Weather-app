@@ -1,13 +1,11 @@
 import os
 from email.message import EmailMessage
 import aiosmtplib
-from dotenv import load_dotenv
-
-load_dotenv()
+from app.config import settings
 
 async def send_reset_email(to_email: str, reset_link: str):
     message = EmailMessage()
-    message["From"] = os.getenv("SMTP_USER")
+    message["From"] = settings.smtp_user
     message["To"] = to_email
     message["Subject"] = "Password Reset for Weather App"
 
@@ -30,9 +28,9 @@ async def send_reset_email(to_email: str, reset_link: str):
 
     await aiosmtplib.send(
         message,
-        hostname=os.getenv("SMTP_HOST"),
-        port=int(os.getenv("SMTP_PORT")),
-        username=os.getenv("SMTP_USER"),
-        password=os.getenv("SMTP_PASSWORD"),
+        hostname=settings.smtp_host,
+        port=settings.smtp_port,
+        username=settings.smtp_user,
+        password=settings.smtp_password,
         use_tls=True,
     )

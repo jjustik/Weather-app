@@ -1,6 +1,6 @@
 // ------ CONFIGURATION & DATA ------
+let Cities = [];
 const apiKey = "";
-let Cities = loadCities() || [];
 let cityInfo = {};
 
 // ------ STATE & FLAGS ------
@@ -8,7 +8,7 @@ let searchInProcess = false;
 let addingBlockFromButton = false;
 let addingBlockFromSearch = false;
 let timeout = null;
-let addButton = loadAddButtonState();
+let addButton = true;
 
 // ------ LOGIC HELPERS ------
 const activeHandlers = [];
@@ -770,7 +770,9 @@ function findTheWeatherBlockButton1() {
         formH1?.addEventListener("submit", newHandlers.prevent)
     })
     document.querySelector(`#weather-${i}`).classList.add("grid")
-    currentMode === "Advanced" ? inputH1s[1].focus() : inputH1s[0].focus();
+    if(!isTablet.matches) {
+        currentMode === "Advanced" ? inputH1s[1].focus() : inputH1s[0].focus();
+    }
     addingBlockFromButton = true;
 }
 
@@ -1225,16 +1227,6 @@ function getNamesForButtons() {
     }
 }
 
-function saveCities() {
-    const CitiesStorage = JSON.stringify(Cities);
-    localStorage.setItem("Cities", CitiesStorage)
-}
-
-function loadCities() {
-    const CitiesStorage = localStorage.getItem("Cities");
-    return JSON.parse(CitiesStorage) || [];
-}
-
 // Глобальный массив слайдеров для работы autoSwitchByElement
 const allSliders = [];
 
@@ -1417,7 +1409,7 @@ function addButtonsToggleFunction() {
             fullWeatherContainer.querySelector(".weather-h1").classList.add("hidden")
             fullWeatherContainer.querySelector(".add-city-button-block-1").classList.add("grid")
             fullWeatherContainer.classList.remove("hidden")
-            autoSwitchByElement(fullWeatherContainers[0])
+            autoSwitchByElement(fullWeatherContainers[i-1])
             addEventListenerForAddButton()
         }
         saveAddButtonState();
@@ -1498,18 +1490,6 @@ function reloadAllCities() {
     renderCitiesWeather();
     renderHourlyCitiesWeather();
     renderDailyCitiesWeather();
-}
-
-function saveAddButtonState() {
-    localStorage.setItem("AddButton", String(addButton))
-}
-
-function loadAddButtonState() {
-    const addButtonState = localStorage.getItem("AddButton");
-    if (addButtonState === null) {
-        return true;
-    }
-    return addButtonState === "true";
 }
 
 function initAddButtonBlock() {
@@ -1648,8 +1628,9 @@ function getLastIndex() {
     return blockIndex;
 }
 
-document.addEventListener("DOMContentLoaded", ()=> {
-    loadCities();
+async function appRun() {
+    await loadCities();
+    await loadAddButtonState();
     addButonBlockTop();
     renderCitiesWeather();
     renderHourlyCitiesWeather();
@@ -1665,6 +1646,10 @@ document.addEventListener("DOMContentLoaded", ()=> {
     addEventListenerForAddButton();
     correctAddButtonsPosition()
     weatherBackgroundEasyModeUpdate()
+}
+
+document.addEventListener("DOMContentLoaded", ()=> {
+    appRun();
 
     searchInput.addEventListener("input", ()=> {
         currentSearchId++;

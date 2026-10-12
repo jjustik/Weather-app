@@ -47,11 +47,12 @@ let searchBtnActive = false;
 let passLengthReq = false;
 let passNumAndLettersReq = false;
 let isLogin = false;
+let authCities = null;
 const form = document.getElementById("profileForm");
 
 //------BACKEND--------
-// const BASE_URL = "http://localhost:8000";
-const BASE_URL = "https://weather-app-production-d28f.up.railway.app";
+const BASE_URL = "http://localhost:8000";
+// const BASE_URL = "https://weather-app-production-d28f.up.railway.app";
 
 function changeModeToAdvanced() {
     if(weatherProject && weatherProject2) {
@@ -154,13 +155,6 @@ function loadTheme() {
     }
 }
 
-function getUsername() {
-    let username = localStorage.getItem("username") || "";
-    if(username.length > 0) {
-        form.innerHTML = `<h2 class="profile-username">${username}</h2>`
-    }
-}
-
 function setWidthForUsernameInput(flag = false) {
     let username = localStorage.getItem("username") || "";
     let usernameInputWidth = username.length * 16;
@@ -177,7 +171,9 @@ function createUsernameInput() {
         usernameInput.classList.add("final-input-width");
     }, 10);
     usernameInput.value = username;
-    usernameInput.focus();
+    if(!isTablet.matches) {
+        usernameInput.focus();
+    }
     username = "";
     addErrorMessageListener();
     editingUsername = true;
@@ -234,6 +230,8 @@ function authModeChange(mode, button) {
     const passVisibilityBtns = document.querySelectorAll(".pass-visibility-btn")
     button.closest(".auth-wrapper").classList.remove("flex");
     button.closest(".auth-box").classList.add("auth-animation")
+    button.closest(".auth-box").querySelector(".pass-visibility-btn").innerHTML = `<svg class="auth-icon visibility-icon" xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="#666666"><path d="m634-422-48.67-48.67q20.34-63-27-108-47.33-45-107.66-26.66L402-654q17-10 36.83-14.67 19.84-4.66 41.17-4.66 72.33 0 122.83 50.5T653.33-500q0 21.33-5 41.5T634-422Zm128.67 128-46-45.33Q762-373 796.17-414.17q34.16-41.16 52.5-85.83-50-107.67-147.84-170.5-97.83-62.83-214.16-62.83-37.67 0-76.34 6.66Q371.67-720 346-710l-51.33-52q37-16.33 87.66-27.17Q433-800 483.33-800q145.67 0 264 82.17Q865.67-635.67 920-500q-25 62.33-64.83 114.5-39.84 52.17-92.5 91.5ZM808-61.33 640-226.67q-35 13-76.17 19.84Q522.67-200 480-200q-147.67 0-266.33-82.17Q95-364.33 40-500q20.33-52.33 54.67-100.5 34.33-48.17 82-90.17L56-812l46.67-47.33 750 750-44.67 48ZM222.67-644q-34.34 26.67-65.34 66.33-31 39.67-46.66 77.67 50.66 107.67 150.16 170.5t224.5 62.83q28.67 0 56.34-3.5 27.66-3.5 45-9.83L532-335.33q-11 4.33-25 6.5-14 2.16-27 2.16-71.67 0-122.5-50.16Q306.67-427 306.67-500q0-13.67 2.16-27 2.17-13.33 6.5-25l-92.66-92Zm309.66 125.67Zm-127.66 63.66Z"/></svg>`
+    button.closest(".auth-box").querySelector(".pass-input-box").querySelector(".input-field").type = 'password';
     authInputs.forEach(input => input.value = "")
     authErrors.forEach(err => err.classList.remove("block"))
     passVisibilityBtns.forEach(btn => btn.classList.remove("flex"))
@@ -259,10 +257,12 @@ function hideProfileMenu() {
 
 function toggleBtnAnimation() {
     searchBar.classList.toggle("active")
-    if(searchBar.classList.contains("active")) {
-        searchInput.focus();
-    } else {
-        searchInput.blur();
+    if(!isTablet.matches) {
+        if(searchBar.classList.contains("active")) {
+            searchInput.focus();
+        } else {
+            searchInput.blur();
+        }
     }
     const clearInput = () => {
         searchInput.value = "";
@@ -330,7 +330,7 @@ async function registration() {
         const res = await fetch(`${BASE_URL}/registration`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ login: login, password: password })
+            body: JSON.stringify({ user_email: login, password: password })
         });
         const data = await res.json();
         console.log(data)
@@ -459,15 +459,49 @@ async function checkAuth() {
         })
         if(!res.ok) {
             updateAuthUI(false);
+            if(form) {
+                getLocalUsername();
+            }
             return;
         }
         const userData = await res.json();
         console.log('Данные залогиненного пользователя:', userData);
+        Cities = userData.cities;
+        loadProfileMenu(userData)
+        getAvatar(userData)
+        if(form) {
+            getUsername(userData)
+        }
         updateAuthUI(true)
-    } catch (error) {
-        console.error('Ошибка сети при проверке авторизации', error)
+    } catch (err) {
+        console.error('Ошибка сети при проверке авторизации', err)
         updateAuthUI(false)
+        if(form) {
+            getLocalUsername();
+        }
     }
+}
+
+function loadProfileMenu(data) {
+    const profileMenuUsername = document.querySelector(".profile-menu-username")
+    const profileMenuEmail = document.querySelector(".profile-menu-email")
+    const profileMenuAvatar = document.querySelector(".middle-profile-image")
+    const setUsernameA = document.querySelector(".set-username-a")
+    const setEmailA = document.querySelector(".set-email-a")
+    profileMenuUsername.textContent = data.name;
+    if(data.name === null) {
+        profileMenuUsername.classList.add("hidden")
+        setUsernameA.classList.add("block")
+    } else {
+        profileMenuUsername.textContent = data.name;
+    }
+    if(data.email === null) {
+        profileMenuEmail.classList.add("hidden")
+        setEmailA.classList.add("block")
+    } else {
+        profileMenuEmail.textContent = data.email
+    }
+    profileMenuAvatar.url = data.avatar_url
 }
 
 loginVisibilitybtn?.addEventListener("click", ()=> {
@@ -481,23 +515,106 @@ loginVisibilitybtn?.addEventListener("click", ()=> {
 })
 
 signupVisibilitybtn?.addEventListener("click", ()=> {
-    if(signupPassInput.type === 'password') {
-        signupPassInput.type = 'text';
+    if(signUpPassInput.type === 'password') {
+        signUpPassInput.type = 'text';
         signupVisibilitybtn.innerHTML = `<svg class="auth-icon visibility-icon" xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="#666666"><path d="M602.83-377.17q50.5-50.5 50.5-122.83t-50.5-122.83q-50.5-50.5-122.83-50.5t-122.83 50.5q-50.5 50.5-50.5 122.83t50.5 122.83q50.5 50.5 122.83 50.5t122.83-50.5ZM401.5-421.5q-32.17-32.17-32.17-78.5t32.17-78.5q32.17-32.17 78.5-32.17t78.5 32.17q32.17 32.17 32.17 78.5t-32.17 78.5q-32.17 32.17-78.5 32.17t-78.5-32.17Zm-186.17 139Q96.67-365 40-500q56.67-135 175.33-217.5Q334-800 480-800t264.67 82.5Q863.33-635 920-500q-56.67 135-175.33 217.5Q626-200 480-200t-264.67-82.5ZM480-500Zm217.5 169.83q99.17-63.5 151.17-169.83-52-106.33-151.17-169.83-99.17-63.5-217.5-63.5t-217.5 63.5Q163.33-606.33 110.67-500q52.66 106.33 151.83 169.83 99.17 63.5 217.5 63.5t217.5-63.5Z"/></svg>`
     } else {
-        signupPassInput.type = 'password';
+        signUpPassInput.type = 'password';
         signupVisibilitybtn.innerHTML = `<svg class="auth-icon visibility-icon" xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="#666666"><path d="m634-422-48.67-48.67q20.34-63-27-108-47.33-45-107.66-26.66L402-654q17-10 36.83-14.67 19.84-4.66 41.17-4.66 72.33 0 122.83 50.5T653.33-500q0 21.33-5 41.5T634-422Zm128.67 128-46-45.33Q762-373 796.17-414.17q34.16-41.16 52.5-85.83-50-107.67-147.84-170.5-97.83-62.83-214.16-62.83-37.67 0-76.34 6.66Q371.67-720 346-710l-51.33-52q37-16.33 87.66-27.17Q433-800 483.33-800q145.67 0 264 82.17Q865.67-635.67 920-500q-25 62.33-64.83 114.5-39.84 52.17-92.5 91.5ZM808-61.33 640-226.67q-35 13-76.17 19.84Q522.67-200 480-200q-147.67 0-266.33-82.17Q95-364.33 40-500q20.33-52.33 54.67-100.5 34.33-48.17 82-90.17L56-812l46.67-47.33 750 750-44.67 48ZM222.67-644q-34.34 26.67-65.34 66.33-31 39.67-46.66 77.67 50.66 107.67 150.16 170.5t224.5 62.83q28.67 0 56.34-3.5 27.66-3.5 45-9.83L532-335.33q-11 4.33-25 6.5-14 2.16-27 2.16-71.67 0-122.5-50.16Q306.67-427 306.67-500q0-13.67 2.16-27 2.17-13.33 6.5-25l-92.66-92Zm309.66 125.67Zm-127.66 63.66Z"/></svg>`
     }
 })
+
+function getUsername(data) {
+    if(!data.name === null) {
+        let username = data.name;
+        form.innerHTML = `<h2 class="profile-username">${username}</h2>`
+    }
+}
+
+function getLocalUsername() {
+    let username = localStorage.getItem("username") || "";
+    if(username.length > 0) {
+        form.innerHTML = `<h2 class="profile-username">${username}</h2>`
+    }
+}
+
+function getAvatar(data) {
+    const profileMenuAvatar = document.querySelector(".middle-profile-image")
+    if(avatarImg) {
+        avatarImg.src = data.avatar_url;
+    }
+    profileMenuAvatar.src = data.avatar_url;
+}
+
+function saveAddButtonState() {
+    localStorage.setItem("AddButton", String(addButton))
+}
+
+async function loadAddButtonState() {
+    try {
+        const res = await fetch(`${BASE_URL}/users/me`, {
+            method: 'GET',
+            credentials: 'include'
+        })
+        if(!res.ok) {
+            loadLocalAddButtonState();
+            return;
+        }
+        const userData = await res.json();
+        addButton = userData.add_button
+    } catch(err) {
+        console.error('Ошибка сети при загрузке городов', err)
+        loadLocalAddButtonState();
+    }
+}
+
+function loadLocalAddButtonState() {
+    const addButtonState = localStorage.getItem("AddButton");
+    if (addButtonState === null) {
+        addButton = true;
+        return;
+    }
+    addButtonState === "true" ? addButton = true : addButton = false;
+}
+
+function saveCities() {
+    const CitiesStorage = JSON.stringify(Cities);
+    localStorage.setItem("Cities", CitiesStorage)
+}
+
+function saveCitiesLocal() {
+    const CitiesStorage = JSON.stringify(Cities);
+    localStorage.setItem("Cities", CitiesStorage)
+}
+
+async function loadCities() {
+    try {
+        const res = await fetch(`${BASE_URL}/users/me`, {
+            method: 'GET',
+            credentials: 'include'
+        })
+        if(!res.ok) {
+            loadLocalCities()
+            return;
+        }
+        const userData = await res.json();
+        Cities = userData.cities;
+    } catch(err) {
+        console.error('Ошибка сети при загрузке городов', err)
+        loadLocalCities()
+    }
+}
+
+function loadLocalCities() {
+    const CitiesStorage = localStorage.getItem("Cities");
+    Cities = JSON.parse(CitiesStorage) || []
+}
 
 document.addEventListener("DOMContentLoaded", ()=> {
     loadTheme();
     getMode();
     profileMenuToggle();
     checkAuth()
-    if(form) {
-        getUsername();
-    }
     themeChangeBlock.addEventListener("mouseenter", ()=> {
         const allThemes = document.querySelectorAll(".theme")
         allThemes.forEach(el => el.classList.add("pointer-events"))
@@ -541,7 +658,7 @@ document.addEventListener("DOMContentLoaded", ()=> {
         if(editingUsername === false) {
             const usernameInput = document.querySelector(".profile-username-input");
             if(!usernameInput) {
-                createUsernameInput();
+                createUsernameInput(true);
                 editingUsername = true;
                 e.stopPropagation();
             }
@@ -613,6 +730,23 @@ document.addEventListener("DOMContentLoaded", ()=> {
         })
 
         avatarImg.onload = () => URL.revokeObjectURL(url)
+    })
+    saveBtn?.addEventListener("click", async ()=> {
+        const file = avatarInput.files[0];
+        if(!file) return;
+
+        const formData = new FormData();
+        formData.append('avatar', file)
+
+        try {
+            const res = await fetch(`${BASE_URL}/users/me/avatar`, {
+                method: 'POST',
+                body: formData,
+                credentials: 'include'
+            })
+        } catch(err) {
+            console.error('Ошибка сети:', err);
+        }
     })
     signUpPassInput?.addEventListener("input", function() {
         passCheck()

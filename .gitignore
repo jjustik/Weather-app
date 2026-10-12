@@ -220,3 +220,7 @@ backend/media/avatars/
 # Meta data MacOS
 .DS_Store
 .env*.local
+
+# Logs
+/logs/
+*.log
