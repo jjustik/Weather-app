@@ -19,7 +19,6 @@ class User(Base):
     cities: Mapped[list[str] | None] = mapped_column(JSONB, nullable=True)
     add_button: Mapped[bool] = mapped_column(default=True)
 
-    stripe_customer_id: Mapped[str | None] = mapped_column(String, unique=True, nullable=True)
     is_premium: Mapped[bool] = mapped_column(Boolean, default=False)
     coins_balance: Mapped[int] = mapped_column(Integer, default=0)
 

@@ -122,3 +122,8 @@ class InvalidCoinPackageException(AppException):
 
     def __init__(self, package_id: str):
         super().__init__(detail=f"The coin package '{package_id}' does not exist.")
+
+
+class AlreadyPremiumException(AppException):
+    status_code = status.HTTP_409_CONFLICT
+    detail = "User already has an active premium subscription."

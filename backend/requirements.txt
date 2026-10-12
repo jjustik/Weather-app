@@ -17,3 +17,4 @@ datetime==6.0
 charset_normalizer==3.5.1
 requests==2.34.2
 stripe==15.6.1
+alembic==1.26.0
