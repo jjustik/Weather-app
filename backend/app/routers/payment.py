@@ -1,17 +1,26 @@
-import stripe
+from datetime import datetime, timezone
 from typing import Annotated
+
+import stripe
 from fastapi import APIRouter, Depends, Request
+from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from loguru import logger
 
-from datetime import datetime, timezone
-from app.models.user import Subscription
 from app.config import settings
 from app.db import get_async_session
+from app.exceptions import (
+    AlreadyPremiumException,
+    InvalidCoinPackageException,
+    InvalidStripeSignatureException,
+)
+from app.models.user import (
+    User as UserModel,
+    Subscription,
+    Payment,
+    ProceedWebhookEvent,
+)
 from app.utils.auth import get_current_user
-from app.models import User as UserModel, Payment, ProceedWebhookEvent
-from app.exceptions import InvalidStripeSignatureException, InvalidCoinPackageException, AlreadyPremiumException
 
 stripe.api_key = settings.stripe_secret_key
 

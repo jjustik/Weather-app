@@ -1,13 +1,11 @@
-from sqlalchemy.orm import DeclarativeBase, relationship
+from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from typing import AsyncGenerator, Optional
-import os
-from dotenv import load_dotenv
+from sqlalchemy.orm import DeclarativeBase
 
-load_dotenv()
-DATABASE_URL = os.getenv("DATABASE_URL")
+from app.config import settings
 
-engine = create_async_engine(DATABASE_URL, echo=True)
+
+engine = create_async_engine(settings.database_url, echo=True)
 async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
 
 class Base(DeclarativeBase):

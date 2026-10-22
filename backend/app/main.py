@@ -15,6 +15,7 @@ FRONTEND_AVATARS_DIR.mkdir(parents=True, exist_ok=True)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    setup_logger()
     await create_db_and_tables()
     yield
 
